@@ -13,5 +13,8 @@ public class BoidSettings : ScriptableObject
     public float separationWeight;
     public float alignmentWeight;
     public float cohesionWeight;
+    
+    public float neighborMaxDist;
+    public float desiredDist;
 
 }
