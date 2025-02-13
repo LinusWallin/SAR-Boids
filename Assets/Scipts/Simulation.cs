@@ -2,6 +2,11 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Simulates the boids in the search and rescue scenario
+/// </summary>
+/// <author>Linus Wallin<author/>
+/// <version>1.0<version/>
 public class Simulation : MonoBehaviour 
 {
     const int threadGroupSize = 1024;

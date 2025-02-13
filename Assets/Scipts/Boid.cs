@@ -1,5 +1,10 @@
 using UnityEngine;
 
+/// <summary>
+/// Keeps track of and updates the position and velocity of the boid
+/// </summary>
+/// <author>Linus Wallin<author/>
+/// <version>1.0<version/>
 public class Boid : MonoBehaviour
 {
     BoidSettings boidSettings;

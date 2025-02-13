@@ -1,5 +1,10 @@
 using UnityEngine;
 
+/// <summary>
+/// Settings for the boid search and rescue simulation
+/// </summary>
+/// <author>Linus Wallin<author/>
+/// <version>1.0<version/>
 [CreateAssetMenu(fileName = "BoidSettings", menuName = "Scriptable Objects/BoidSettings")]
 public class BoidSettings : ScriptableObject
 {
