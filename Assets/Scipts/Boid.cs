@@ -45,7 +45,7 @@ public class Boid : MonoBehaviour
     }
 
     /// <summary>
-    /// 
+    /// Updates the parameters of the boid
     /// </summary>
     public void UpdateBoid()
     {
