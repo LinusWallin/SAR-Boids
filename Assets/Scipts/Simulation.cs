@@ -17,7 +17,27 @@ public class Simulation : MonoBehaviour
 
     void Start()
     {
-        
+        boids = new Boid[boidSettings.numBoids];
+        for (int i = 0; i < boidSettings.numBoids; i++) {
+            GameObject b = Instantiate(boidPrefab, transform);
+            b.transform.position = new Vector3(
+                boidSettings.boidRadius * (i % boidSettings.startCols), 
+                boidSettings.boidRadius * Mathf.Floor(i / boidSettings.startCols),
+                boidSettings.boidRadius * Mathf.Floor(i / (boidSettings.startCols * boidSettings.startRows))
+            );
+            boids[i] = b.GetComponent<Boid>();
+            Vector3 direction = new Vector3(
+                Random.Range(-boidSettings.maxSpeed, boidSettings.maxSpeed), 
+                Random.Range(-boidSettings.maxSpeed, boidSettings.maxSpeed),
+                Random.Range(-boidSettings.maxSpeed, boidSettings.maxSpeed)
+            );
+            float speed = Random.Range(boidSettings.minSpeed,boidSettings.maxSpeed);
+            boids[i].Init(
+                boidSettings,  
+                direction,
+                speed
+            );
+        }
     }
 
     void Update()

@@ -9,6 +9,9 @@ using UnityEngine;
 public class BoidSettings : ScriptableObject
 {
     public int numBoids;
+    public int startCols;
+    public int startRows;
+    public int startDepth;
     public float boidRadius;
     
     public float minSpeed;

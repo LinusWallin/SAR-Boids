@@ -64,7 +64,7 @@ public class Boid : MonoBehaviour
         direction *= speed;
 
         transform.Translate(direction * Time.deltaTime, Space.World);
-        transform.right = direction;
+        transform.forward = direction;
     }
 
     /// <summary>
