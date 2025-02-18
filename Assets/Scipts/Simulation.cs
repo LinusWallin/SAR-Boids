@@ -55,15 +55,15 @@ public class Simulation : MonoBehaviour
             var boidBuffer = new ComputeBuffer(boidSettings.numBoids, BoidData.Size);
             boidBuffer.SetData(boidData);
 
-            compute.SetBuffer (0, "boids", boidBuffer);
-            compute.SetInt ("numBoids", boids.Length);
-            compute.SetFloat ("neighborMaxDist", boidSettings.neighborMaxDist);
-            compute.SetFloat ("desiredDist", boidSettings.desiredDist);
+            compute.SetBuffer(0, "boids", boidBuffer);
+            compute.SetInt("numBoids", boids.Length);
+            compute.SetFloat("neighborMaxDist", boidSettings.neighborMaxDist);
+            compute.SetFloat("desiredDist", boidSettings.desiredDist);
 
-            int threadGroups = Mathf.CeilToInt (boidSettings.numBoids / (float) threadGroupSize);
-            compute.Dispatch (0, threadGroups, 1, 1);
+            int threadGroups = Mathf.CeilToInt(boidSettings.numBoids / (float) threadGroupSize);
+            compute.Dispatch(0, threadGroups, 1, 1);
 
-            boidBuffer.GetData (boidData);
+            boidBuffer.GetData(boidData);
 
             for (int i = 0; i < boids.Length; i++)
             {
@@ -83,10 +83,10 @@ public class Simulation : MonoBehaviour
     public struct BoidData {
         public Vector3 position;
         public Vector3 direction;
-        public Vector3 separationDirection;
 
         public Vector3 flockDirection;
         public Vector3 flockCenter;
+        public Vector3 separationDirection;
         public int numFlockmates;
 
         public static int Size {

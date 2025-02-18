@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6a4a33dd2db013d46be6e20eba6db647, type: 3}
   m_Name: BoidSettings
   m_EditorClassIdentifier: 
-  numBoids: 100
+  numBoids: 10
   startCols: 5
-  startRows: 5
-  startDepth: 4
+  startRows: 2
+  startDepth: 1
   boidRadius: 5
   minSpeed: 2
   maxSpeed: 5
@@ -24,4 +24,4 @@ MonoBehaviour:
   alignmentWeight: 10
   cohesionWeight: 75
   neighborMaxDist: 50
-  desiredDist: 10
+  desiredDist: 25

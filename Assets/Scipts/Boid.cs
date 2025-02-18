@@ -39,7 +39,6 @@ public class Boid : MonoBehaviour
         this.boidSettings = boidSettings;
         this.direction = direction;
         this.speed = speed;
-        this.acceleration = new Vector3();
         this.numFlockmates = 0;
         this.flockCenter = new Vector3();
     }
@@ -49,6 +48,9 @@ public class Boid : MonoBehaviour
     /// </summary>
     public void UpdateBoid()
     {
+
+        acceleration = new Vector3();
+
         CohesionRule();
         SeparationRule();
         AlignmentRule();
