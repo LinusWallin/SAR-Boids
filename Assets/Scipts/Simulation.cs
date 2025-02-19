@@ -40,7 +40,8 @@ public class Simulation : MonoBehaviour
             boids[i].Init(
                 boidSettings,  
                 direction,
-                speed
+                speed,
+                true
             );
         }
     }

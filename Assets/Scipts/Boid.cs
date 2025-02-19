@@ -4,11 +4,12 @@ using UnityEngine;
 /// Keeps track of and updates the position and velocity of the boid
 /// </summary>
 /// <author>Linus Wallin<author/>
-/// <version>1.0<version/>
+/// <version>1.1<version/>
 public class Boid : MonoBehaviour
 {
     BoidSettings boidSettings;
 
+    public bool isAlive;
     public float speed;
     public int numFlockmates;
     public Vector3 direction;
@@ -35,10 +36,11 @@ public class Boid : MonoBehaviour
     /// <param name="boidSettings">Settings for the boids in the simulation</param>
     /// <param name="direction">Initial direction of the boid</param>
     /// <param name="speed">Initial speed of the boid</param>
-    public void Init(BoidSettings boidSettings, Vector3 direction, float speed) {
+    public void Init(BoidSettings boidSettings, Vector3 direction, float speed, bool lifeStatus) {
         this.boidSettings = boidSettings;
         this.direction = direction;
         this.speed = speed;
+        this.isAlive = lifeStatus;
         this.numFlockmates = 0;
         this.flockCenter = new Vector3();
     }
