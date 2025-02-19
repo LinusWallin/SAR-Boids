@@ -17,6 +17,11 @@ public class Simulation : MonoBehaviour
 
     void Start()
     {
+        SpawnBoids();
+    }
+
+    void SpawnBoids ()
+    {
         boids = new Boid[boidSettings.numBoids];
         for (int i = 0; i < boidSettings.numBoids; i++) {
             GameObject b = Instantiate(boidPrefab, transform);
@@ -67,7 +72,7 @@ public class Simulation : MonoBehaviour
 
             for (int i = 0; i < boids.Length; i++)
             {
-                if (boids[i] != null) {
+                if (boids[i] != null & boids[i].isAlive) {
                     boids[i].flockCenter = boidData[i].flockCenter;
                     boids[i].numFlockmates = boidData[i].numFlockmates;
                     boids[i].alignmentForce = boidData[i].flockDirection;
