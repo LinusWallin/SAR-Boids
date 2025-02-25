@@ -4,7 +4,6 @@ using UnityEngine;
 /// Keeps track of and updates the position and velocity of the boid
 /// </summary>
 /// <author>Linus Wallin<author/>
-/// <version>1.1<version/>
 public class Boid : MonoBehaviour
 {
     BoidSettings boidSettings;
@@ -43,6 +42,8 @@ public class Boid : MonoBehaviour
         this.isAlive = lifeStatus;
         this.numFlockmates = 0;
         this.flockCenter = new Vector3();
+
+        transform.forward = direction;
     }
 
     /// <summary>
