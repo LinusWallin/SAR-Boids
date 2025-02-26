@@ -14,6 +14,8 @@ public class Simulation : MonoBehaviour
     public Transform boundingBox;
     public ComputeShader compute;
     Boid[] boids;
+    Boid[] aliveBoids;
+    Boid[] boidCMs;
 
     void Start()
     {
@@ -26,11 +28,23 @@ public class Simulation : MonoBehaviour
             
             CreateCardinalMarks(wallCenter, wallSize, wallRot);
         }
+
+        int numGhosts = boidCMs.Length;
+        boids = new Boid[boidSettings.numBoids + numGhosts];
+        
+        for (int i = 0; i < boidSettings.numBoids; i++) {
+            boids[i] = aliveBoids[i];
+        }
+
+        for (int j = 0; j < numGhosts; j++) {
+            boids[boidSettings.numBoids + j] = boidCMs[j];
+        }
+
     }
 
     void SpawnBoids ()
     {
-        boids = new Boid[boidSettings.numBoids];
+        aliveBoids = new Boid[boidSettings.numBoids];
         for (int i = 0; i < boidSettings.numBoids; i++) {
             GameObject b = Instantiate(boidPrefab, transform);
             b.transform.position = new Vector3(
@@ -38,14 +52,14 @@ public class Simulation : MonoBehaviour
                 boidSettings.boidRadius * Mathf.Floor(i / boidSettings.startCols),
                 boidSettings.boidRadius * Mathf.Floor(i / (boidSettings.startCols * boidSettings.startRows))
             );
-            boids[i] = b.GetComponent<Boid>();
+            aliveBoids[i] = b.GetComponent<Boid>();
             Vector3 direction = new Vector3(
                 Random.Range(-boidSettings.maxSpeed, boidSettings.maxSpeed), 
                 Random.Range(-boidSettings.maxSpeed, boidSettings.maxSpeed),
                 Random.Range(-boidSettings.maxSpeed, boidSettings.maxSpeed)
             );
             float speed = Random.Range(boidSettings.minSpeed,boidSettings.maxSpeed);
-            boids[i].Init(
+            aliveBoids[i].Init(
                 boidSettings,  
                 direction,
                 speed,
@@ -113,7 +127,7 @@ public class Simulation : MonoBehaviour
             planeSize.y / boidRows
         );
 
-        Boid[] boidCMs = new Boid[numGhostBoids];
+        boidCMs = new Boid[numGhostBoids];
         Vector3 boidCMPos = new Vector3();
 
         for (int row = 0; row < boidRows; row++) {
@@ -155,16 +169,21 @@ public class Simulation : MonoBehaviour
     void Update()
     {
         if (boids != null) {
-            var boidData = new BoidData[boidSettings.numBoids];
+            var boidData = new BoidData[boids.Length];
 
-            for (int i = 0; i < boidSettings.numBoids; i++) {
+            for (int i = 0; i < boids.Length; i++) {
                 if (boids[i] != null) {
                     boidData[i].position = boids[i].position;
                     boidData[i].direction = boids[i].direction;
+                    if (boids[i].isAlive) {
+                        boidData[i].isAlive = 1;
+                    } else {
+                        boidData[i].isAlive = 0;
+                    }
                 }
             }
 
-            var boidBuffer = new ComputeBuffer(boidSettings.numBoids, BoidData.Size);
+            var boidBuffer = new ComputeBuffer(boids.Length, BoidData.Size);
             boidBuffer.SetData(boidData);
 
             compute.SetBuffer(0, "boids", boidBuffer);
@@ -179,7 +198,7 @@ public class Simulation : MonoBehaviour
 
             for (int i = 0; i < boids.Length; i++)
             {
-                if (boids[i] != null & boids[i].isAlive) {
+                if (boids[i] != null && boids[i].isAlive) {
                     boids[i].flockCenter = boidData[i].flockCenter;
                     boids[i].numFlockmates = boidData[i].numFlockmates;
                     boids[i].alignmentForce = boidData[i].flockDirection;
@@ -187,6 +206,8 @@ public class Simulation : MonoBehaviour
                     boids[i].UpdateBoid();
                 }
             }
+
+            Debug.Log(boids[0].numFlockmates);
 
             boidBuffer.Release();
         }
@@ -200,10 +221,11 @@ public class Simulation : MonoBehaviour
         public Vector3 flockCenter;
         public Vector3 separationDirection;
         public int numFlockmates;
+        public int isAlive;
 
         public static int Size {
             get {
-                return sizeof (float) * 3 * 5 + sizeof (int);
+                return sizeof (float) * 3 * 5 + sizeof (int) * 2;
             }
         }
     }
