@@ -21,15 +21,29 @@ public class Simulation : MonoBehaviour
     {
         SpawnBoids();
 
+        List<Boid[]> boidList = new List<Boid[]>();
+        int numGhosts = 0;
+
         foreach (Transform wallObj in boundingBox) {
             Vector3 wallCenter = wallObj.position;
             Vector3 wallSize = wallObj.gameObject.GetComponent<MeshCollider>().bounds.size;
             Vector3 wallRot = wallObj.rotation.eulerAngles;
             
-            CreateCardinalMarks(wallCenter, wallSize, wallRot);
+            Boid[] planeCMs = CreateCardinalMarks(wallCenter, wallSize, wallRot);
+            boidList.Add(planeCMs);
+            numGhosts += planeCMs.Length;
         }
 
-        int numGhosts = boidCMs.Length;
+        boidCMs = new Boid[numGhosts];
+
+        int arrIndex = 0;
+        foreach (Boid[] boidArr in boidList) {
+            for (int i = 0; i < boidArr.Length; i++) {
+                boidCMs[arrIndex] = boidArr[i];
+                arrIndex++;
+            }
+        }
+
         boids = new Boid[boidSettings.numBoids + numGhosts];
         
         for (int i = 0; i < boidSettings.numBoids; i++) {
@@ -68,9 +82,8 @@ public class Simulation : MonoBehaviour
         }
     }
 
-    void CreateCardinalMarks (Vector3 center, Vector3 size, Vector3 rotation)
+    Boid[] CreateCardinalMarks (Vector3 center, Vector3 size, Vector3 rotation)
     {
-        Debug.Log(center + ", " + size + ", " + rotation);
 
         Vector3 ghostDir = new Vector3();
         Vector2 planeCenter = new Vector2();
@@ -127,7 +140,7 @@ public class Simulation : MonoBehaviour
             planeSize.y / boidRows
         );
 
-        boidCMs = new Boid[numGhostBoids];
+        Boid[] boidCM = new Boid[numGhostBoids];
         Vector3 boidCMPos = new Vector3();
 
         for (int row = 0; row < boidRows; row++) {
@@ -154,8 +167,8 @@ public class Simulation : MonoBehaviour
                 int ghostIdx = col + col * row;
                 GameObject ghostBoid = Instantiate(boidPrefab, transform);
                 ghostBoid.transform.position = boidCMPos;
-                boidCMs[ghostIdx] = ghostBoid.GetComponent<Boid>();
-                boidCMs[ghostIdx].Init(
+                boidCM[ghostIdx] = ghostBoid.GetComponent<Boid>();
+                boidCM[ghostIdx].Init(
                     boidSettings,
                     ghostDir,
                     0,
@@ -163,6 +176,7 @@ public class Simulation : MonoBehaviour
                 );
             }
         }
+        return boidCM;
 
     }
 
@@ -206,8 +220,6 @@ public class Simulation : MonoBehaviour
                     boids[i].UpdateBoid();
                 }
             }
-
-            Debug.Log(boids[0].numFlockmates);
 
             boidBuffer.Release();
         }
