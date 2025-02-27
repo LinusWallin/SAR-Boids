@@ -24,6 +24,7 @@ public class Simulation : MonoBehaviour
         List<Boid[]> boidList = new List<Boid[]>();
         int numGhosts = 0;
 
+        //Loops through the planes of the bounding box and places ghosts on them
         foreach (Transform wallObj in boundingBox) {
             Vector3 wallCenter = wallObj.position;
             Vector3 wallSize = wallObj.gameObject.GetComponent<MeshCollider>().bounds.size;
@@ -36,6 +37,7 @@ public class Simulation : MonoBehaviour
 
         boidCMs = new Boid[numGhosts];
 
+        //merging the arrays of the different planes into one ghost boid array
         int arrIndex = 0;
         foreach (Boid[] boidArr in boidList) {
             for (int i = 0; i < boidArr.Length; i++) {
@@ -82,6 +84,13 @@ public class Simulation : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Spawns ghost boids on a plane with a given center point, size and rotation
+    /// </summary>
+    /// <param name="center">Center point of the plane</param>
+    /// <param name="size">Size of the plane</param>
+    /// <param name="rotation">Rotation of the plane</param>
+    /// <returns>returns the boid array of ghosts</returns>
     Boid[] CreateCardinalMarks (Vector3 center, Vector3 size, Vector3 rotation)
     {
 
