@@ -67,3 +67,24 @@ crashlytics-build.properties
 # Temporary auto-generated Android Assets
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
+
+### LaTeX gitignore ###
+*.acn
+*.atfi
+*.aux
+*.bbl
+*.blg
+*.brf
+*.fdb_latexmk
+*.fls
+*.ist
+*.lof
+*.log
+*.lol
+*.lot
+*.mw
+*.nlo
+*.out
+*.synctex.gz
+*.tdn
+*.toc
