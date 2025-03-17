@@ -1,0 +1,671 @@
+% Make it possible to conditionally depend on the TeX engine used
+\RequirePackage{ifxetex}
+\RequirePackage{ifluatex}
+\newif\ifxeorlua
+\ifxetex\xeorluatrue\fi
+\ifluatex\xeorluatrue\fi
+
+\ifxeorlua
+
+\RequirePackage{expl3}
+\ExplSyntaxOn
+
+\ExplSyntaxOff
+\else
+\RequirePackage{expl3}
+\ExplSyntaxOn
+\pdf_version_gset:n{1.5}
+\ExplSyntaxOff
+\fi
+
+%% Define a pair of commands to disable and reenable specific packages - see https://tex.stackexchange.com/questions/39415/unload-a-latex-package
+\makeatletter
+\newcommand{\disablepackage}[2]{%
+  \disable@package@load{#1}{#2}%
+}
+\newcommand{\reenablepackage}[1]{%
+  \reenable@package@load{#1}%
+}
+\makeatother
+\ifxeorlua
+\disablepackage{transparent}{}
+\fi
+
+%% The template is designed to handle a thesis in English or Swedish
+% set the default language to english or swedish by passing an option to the documentclass - this handles the inside title page
+% To optimize for digital output (this changes the color palette add the option: digitaloutput
+% To use \ifnomenclature add the option nomenclature
+% To use bibtex or biblatex - include one of these as an option
+\documentclass[nomenclature, english, bibtex, final]{kththesis}
+% if pdflatex \usepackage[utf8]{inputenc}
+
+%% Conventions for todo notes:
+% Informational
+%% \generalExpl{Comments/directions/... in English}
+\newcommand*{\generalExpl}[1]{\todo[inline]{#1}}                
+
+% Language-specific information (currently in English or Swedish)
+\newcommand*{\engExpl}[1]{\todo[inline, backgroundcolor=kth-lightgreen40]{#1}} %% \engExpl{English descriptions about formatting}
+\newcommand*{\sweExpl}[1]{\todo[inline, backgroundcolor=kth-lightblue40]{#1}}  %% % \sweExpl{Text på svenska}
+
+% warnings
+\newcommand*{\warningExpl}[1]{\todo[inline, backgroundcolor=kth-lightred40]{#1}} %% \warningExpl{warnings}
+
+% Uncomment to hide specific comments, to hide **all** ToDos add `final` to
+% document class
+% \renewcommand\warningExpl[1]{}
+% \renewcommand\generalExpl[1]{}
+% \renewcommand\engExpl[1]{}
+% For example uncommenting the following line hides the Swedish language explanations
+% \renewcommand\sweExpl[1]{}
+
+
+% \usepackage[style=numeric,sorting=none,backend=biber]{biblatex}
+\ifbiblatex
+    %\usepackage[language=english,bibstyle=authoryear,citestyle=authoryear, maxbibnames=99]{biblatex}
+    % Alternatively you might use another style, such as IEEE and use citestyle=numeric-comp  to put multiple citations in a single pair of square brackets
+    \usepackage[style=ieee,citestyle=numeric-comp]{biblatex}
+    \addbibresource{references.bib}
+\else
+    % The line(s) below are for BibTeX
+    \bibliographystyle{bibstyle/myIEEEtran}
+\fi
+
+
+% include a variety of packages that are useful
+\input{lib/includes}
+\input{lib/kthcolors}
+\input{lib/defines}  % load some additional definitions to make writing more consistent
+
+% The following is needed in conjunction with generating the DiVA data with abstracts and keywords using the scontents package and a modified listings environment
+%\usepackage{listings}   %  already included
+\ExplSyntaxOn
+\newcommand\typestoredx[2]{\expandafter\__scontents_typestored_internal:nn\expandafter{#1} {#2}}
+\ExplSyntaxOff
+\makeatletter
+\let\verbatimsc\@undefined
+\let\endverbatimsc\@undefined
+\lst@AddToHook{Init}{\hyphenpenalty=50\relax}
+\makeatother
+
+
+\lstnewenvironment{verbatimsc}
+    {
+    \lstset{%
+        basicstyle=\ttfamily\tiny,
+        backgroundcolor=\color{white},
+        %basicstyle=\tiny,
+        %columns=fullflexible,
+        columns=[l]fixed,
+        language=[LaTeX]TeX,
+        %numbers=left,
+        %numberstyle=\tiny\color{gray},
+        keywordstyle=\color{red},
+        breaklines=true,                 % sets automatic line breaking
+        breakatwhitespace=true,          % sets if automatic breaks should only happen at whitespace
+        %keepspaces=false,
+        breakindent=0em,
+        %fancyvrb=true,
+        frame=none,                     % turn off any box
+        postbreak={}                    % turn off any hook arrow for continuation lines
+    }
+}{}
+
+%% Add some more keywords to bring out the structure more
+\lstdefinestyle{[LaTeX]TeX}{
+morekeywords={begin, todo, textbf, textit, texttt}
+}
+
+%% definition of new command for bytefield package
+\newcommand{\colorbitbox}[3]{%
+	\rlap{\bitbox{#2}{\color{#1}\rule{\width}{\height}}}%
+	\bitbox{#2}{#3}}
+
+% define a left aligned table cell that is ragged right
+\newcolumntype{L}[1]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}p{#1}}
+
+% Because backref is not compatible with biblatex
+\ifbiblatex
+    \usepackage[plainpages=false]{hyperref}
+\else
+    \usepackage[
+    backref=page,
+    pagebackref=false,
+    plainpages=false,
+                            % PDF related options
+    unicode=true,           % Unicode encoded PDF strings
+    bookmarks=true,         % generate bookmarks in PDF files
+    bookmarksopen=false,    % Do not automatically open the bookmarks in the PDF reading program
+    pdfpagemode=UseNone,    % None, UseOutlines, UseThumbs, or FullScreen
+    destlabel,              % better naming of destinations
+    pdfencoding=auto,       % for unicode in 
+    ]{hyperref}
+    \makeatletter
+    \ltx@ifpackageloaded{attachfile2}{
+    % cannot use backref if one is using attachfile
+    }
+    {\usepackage{backref}
+    %
+    % Customize list of backreferences.
+    % From https://tex.stackexchange.com/a/183735/1340
+    \renewcommand*{\backref}[1]{}
+    \renewcommand*{\backrefalt}[4]{%
+    \ifcase #1%
+          \or [Page~#2.]%
+          \else [Pages~#2.]%
+    \fi%
+    }
+    }
+    \makeatother
+
+\fi
+\usepackage[all]{hypcap}	%% prevents an issue related to hyperref and caption linking
+
+%% Acronyms
+% note that nonumberlist - removes the cross references to the pages where the acronym appears
+% note that super will set the descriptions text aligned
+% note that nomain - does not produce a main glossary, thus only acronyms will be in the glossary
+% note that nopostdot - will prevent there being a period at the end of each entry
+\usepackage[acronym, style=super, section=section, nonumberlist, nomain,
+nopostdot]{glossaries}
+\setlength{\glsdescwidth}{0.75\textwidth}
+\usepackage[]{glossaries-extra}
+
+%% For use with the README_notes
+% Define a new type of glossary so that the acronyms defined in the README_notes document can be distinct from those in the thesis template
+% the tlg, tld, and dn will be the file extensions used for this glossary
+\newglossary[tlg]{readme}{tld}{tdn}{README acronyms}
+
+
+\input{lib/includes-after-hyperref}
+
+%\glsdisablehyper
+\makeglossaries
+%\makenoidxglossaries
+
+% The following bit of ugliness is because of the problems PDFLaTeX has handling a non-breaking hyphen
+% unless it is converted to UTF-8 encoding.
+% If you do not use such characters in your acronyms, this could be simplified to just include the acronyms file.
+\ifxeorlua
+\input{lib/acronyms}                %load the acronyms file
+\else
+\input{lib/acronyms-for-pdflatex}
+\fi
+
+
+% insert the configuration information with author(s), examiner, supervisor(s), ...
+\input{custom_configuration}
+
+\title{This is the title in the language of the thesis}
+\subtitle{A subtitle in the language of the thesis}
+
+% give the alternative title - i.e., if the thesis is in English, then give a Swedish title
+\alttitle{Detta är den svenska översättningen av titeln}
+\altsubtitle{Detta är den svenska översättningen av undertiteln}
+
+\EnglishKeywords{Canvas Learning Management System, Docker containers, Performance tuning}
+\SwedishKeywords{Canvas Lärplattform, Dockerbehållare, Prestandajustering}
+
+%%%%% For the oral presentation
+%% Add this information once your examiner has scheduled your oral presentation
+\presentationDateAndTimeISO{2022-03-15 13:00}
+\presentationLanguage{eng}
+\presentationRoom{via Zoom https://kth-se.zoom.us/j/ddddddddddd}
+\presentationAddress{Isafjordsgatan 22 (Kistagången 16)}
+\presentationCity{Stockholm}
+
+% When there are multiple opponents, separate their names with '\&'
+\opponentsNames{A. B. Normal \& A. X. E. Normalè}
+
+\trita{TRITA -- EECS-EX}{2024:0000}
+
+% Put the title, author, and keyword information into the PDF meta information
+\input{lib/pdf_related_includes}
+
+
+% the custom colors and the commands are defined in defines.tex    
+\hypersetup{
+	colorlinks  = true,
+	breaklinks  = true,
+	linkcolor   = \linkscolor,
+	urlcolor    = \urlscolor,
+	citecolor   = \refscolor,
+	anchorcolor = black
+}
+
+\ifnomenclature
+% The following lines make the page numbers and equations hyperlinks in the Nomenclature list
+\renewcommand*{\pagedeclaration}[1]{\unskip, \dotfill\hyperlink{page.#1}{page\nobreakspace#1}}
+
+% You can also change the page heading for the nomenclature
+\renewcommand{\nomname}{List of Symbols Used}
+
+% You can even add customization text before the list
+\renewcommand{\nompreamble}{The following symbols will be later used within the body of the thesis.}
+\makenomenclature
+\fi
+
+% format for JSON listings
+\colorlet{punct}{red!60!black}
+\definecolor{delim}{RGB}{20,105,176}
+\definecolor{numb}{RGB}{106, 109, 32}
+\definecolor{string}{RGB}{0, 0, 0}
+
+\lstdefinelanguage{json}{
+    numbers=none,
+    numberstyle=\small,
+    frame=none,
+    rulecolor=\color{black},
+    showspaces=false,
+    showtabs=false,
+    breaklines=true,
+    postbreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\color{gray}\hookrightarrow\space}},
+    breakatwhitespace=true,
+    basicstyle=\ttfamily\small,
+    extendedchars=false,
+    upquote=true,
+    morestring=[b]",
+    stringstyle=\color{string},
+    literate=
+     *{0}{{{\color{numb}0}}}{1}
+      {1}{{{\color{numb}1}}}{1}
+      {2}{{{\color{numb}2}}}{1}
+      {3}{{{\color{numb}3}}}{1}
+      {4}{{{\color{numb}4}}}{1}
+      {5}{{{\color{numb}5}}}{1}
+      {6}{{{\color{numb}6}}}{1}
+      {7}{{{\color{numb}7}}}{1}
+      {8}{{{\color{numb}8}}}{1}
+      {9}{{{\color{numb}9}}}{1}
+      {:}{{{\color{punct}{:}}}}{1}
+      {,}{{{\color{punct}{,}}}}{1}
+      {\{}{{{\color{delim}{\{}}}}{1}
+      {\}}{{{\color{delim}{\}}}}}{1}
+      {[}{{{\color{delim}{[}}}}{1}
+      {]}{{{\color{delim}{]}}}}{1}
+      {’}{{\char13}}1,
+}
+
+\lstdefinelanguage{XML}
+{
+  basicstyle=\ttfamily\color{blue}\bfseries\small,
+  morestring=[b]",
+  morestring=[s]{>}{<},
+  morecomment=[s]{<?}{?>},
+  stringstyle=\color{black},
+  identifierstyle=\color{blue},
+  keywordstyle=\color{cyan},
+  breaklines=true,
+  postbreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\color{gray}\hookrightarrow\space}},
+  breakatwhitespace=true,
+  morekeywords={xmlns,version,type}% list your attributes here
+}
+
+% In case you use both listings and lstlistings - this makes them both use the same counter
+\makeatletter
+\AtBeginDocument{\let\c@listing\c@lstlisting}
+\makeatother
+\usepackage{subfiles}
+
+% To have Creative Commons (CC) license and logos use the doclicense package
+% Note that the lowercase version of the license has to be used in the modifier
+% i.e., one of by, by-nc, by-nd, by-nc-nd, by-sa, by-nc-sa, zero.
+% For background see:
+% https://www.kb.se/samverkan-och-utveckling/oppen-tillgang-och-bibsamkonsortiet/open-access-and-bibsam-consortium/open-access/creative-commons-faq-for-researchers.html
+% https://kib.ki.se/en/publish-analyse/publish-your-article-open-access/open-licence-your-publication-cc
+\begin{comment}
+\usepackage[
+    type={CC},
+    %modifier={by-nc-nd},
+    %version={4.0},
+    modifier={by-nc},
+    imagemodifier={-eu-88x31},  % to get Euro symbol rather than Dollar sign
+    hyphenation={RaggedRight},
+    version={4.0},
+    %modifier={zero},
+    %version={1.0},
+]{doclicense}
+\end{comment}
+
+\begin{document}
+\selectlanguage{english}
+
+%%% Set the numbering for the title page to a numbering series not in the preface or body
+\pagenumbering{alph}
+\kthcover
+\clearpage\thispagestyle{empty}\mbox{} % empty back of front cover
+\titlepage
+
+% If you do not want to have a bookinfo page, comment out the line saying \bookinfopage and add a \cleardoublepage
+% If you want a bookinfo page: you will get a copyright notice, unless you have used the doclicense package in which case you will get a Creative Commons license. To include the doclicense package, uncomment the configuration of this package above and configure it with your choice of license.
+\bookinfopage
+
+% Frontmatter includes the abstracts and table-of-contents
+\frontmatter
+\setcounter{page}{1}
+\begin{abstract}
+  \markboth{\abstractname}{}
+  \begin{scontents}[store-env=lang]
+  Abstract
+  \end{scontents}
+
+  \subsection*{Keywords}
+    \begin{scontents}[store-env=keywords,print-env=true]
+      \InsertKeywords{english}
+    \end{scontents}
+
+\end{abstract}
+
+\cleardoublepage
+
+\babelpolyLangStart{swedish}
+\begin{abstract}
+  \markboth{\abstractname}{}
+  \begin{scontents}[store-env=lang]
+  Abstrakt
+  \end{scontents}
+
+  \subsection*{Nyckelord}
+  \begin{scontents}[store-env=keywords,print-env=true]
+    \InsertKeywords{swedish}
+  \end{scontents}
+\end{abstract}
+\babelpolyLangStop{swedish}
+
+\cleardoublepage
+
+\section*{Acknowledgments}
+\markboth{Acknowledgments}{}
+
+\acknowlegmentssignature
+
+\fancypagestyle{plain}{}
+\renewcommand{\chaptermark}[1]{ \markboth{#1}{}} 
+\tableofcontents
+  \markboth{\contentsname}{}
+
+\cleardoublepage
+\listoffigures
+
+\cleardoublepage
+
+\listoftables
+\cleardoublepage
+\lstlistoflistings\engExpl{If you have listings in your thesis. If not, then remove this preface page.}
+\cleardoublepage
+% Align the text expansion of the glossary entries
+\newglossarystyle{mylong}{%
+  \setglossarystyle{long}%
+  \renewenvironment{theglossary}%
+    {\begin{longtable}[l]{@{}p{\dimexpr 2cm-\tabcolsep}p{0.8\hsize}}}% <-- change the value here
+    {\end{longtable}}%
+ }
+%\glsaddall
+%\printglossaries[type=\acronymtype, title={List of acronyms}]
+\printglossary[style=mylong, type=\acronymtype, title={List of acronyms and abbreviations}]
+%\printglossary[type=\acronymtype, title={List of acronyms and abbreviations}]
+
+% if the nomenclature option was specified, then include the nomenclature page(s)
+\ifnomenclature
+  \cleardoublepage
+  \printnomenclature
+\fi
+
+\label{pg:lastPageofPreface}
+\mainmatter
+\glsresetall
+\renewcommand{\chaptermark}[1]{\markboth{#1}{}}
+\selectlanguage{english}
+\chapter{Introduction}
+\label{ch:introduction}
+
+
+\section{Background}
+\label{sec:background}
+
+\section{Problem}
+\label{sec:problem}
+
+\subsection{Original problem and definition}
+\label{sec:researchQuestion}
+
+\subsection{Scientific and engineering issues}
+
+
+\section{Purpose}
+
+
+\section{Goals}
+
+\begin{enumerate}
+  \item Subgoal 1
+  \item Subgoal 2
+  \item Subgoal 3
+\end{enumerate}
+
+
+\section{Research Methodology}
+
+
+\section{Delimitations}
+
+
+\section{Structure of the thesis}
+
+%Chapter~\ref{ch:background} presents relevant background information about xxx.  Chapter~\ref{ch:methods} presents the methodology and method used to solve the problem. …
+
+\cleardoublepage
+
+\chapter{Background}
+\label{ch:background}
+
+%\section{Major background area 1}
+
+
+%\subsection{Subarea 1.1}
+
+
+%\subsection{Link layer Encapsulation}
+%\label{sec:llencap}
+
+
+
+\section{Related work area}
+
+
+%\subsection{Major related work 1}
+
+\section{Summary}
+
+\cleardoublepage
+
+\chapter{Method or Methods}
+\label{ch:methods}
+
+
+\section{Research Process}
+\label{sec:researchProcess}
+
+
+\section{Research Paradigm}
+\label{sec:researchParadigm}
+
+
+\section{Data Collection}
+\label{sec:dataCollection}
+
+
+\section[Experimental design/Planned Measurements]{Experimental design and\\Planned Measurements}
+\label{sec:experimentalDesign}
+
+\subsection{Test environment/test bed/model}
+
+\subsection{Hardware/Software to be used}
+
+
+\section{Assessing reliability and validity of the data collected}
+\label{sec:assessingReliability}
+
+
+\subsection{Validity of method}
+\label{sec:validtyOfMethod}
+
+
+\subsection{Reliability of method}
+\label{sec:reliabilityOfMethod}
+
+
+\subsection{Data validity}
+\label{sec:dataValidity}
+
+
+\subsection{Reliability of data}
+\label{sec:reliabilityOfData}
+
+
+\section{Planned Data Analysis}
+\label{sec:plannedDataAnalysis}
+
+
+\subsection{Data Analysis Technique}
+\label{sec:dataAnalysisTechnique}
+
+
+\subsection{Software Tools}
+\label{sec:softwareTools}
+
+
+\section{Evaluation framework}
+\label{sec:evaluationFramework}
+
+\section{System documentation}
+\label{sec:systemDocumentation}
+
+\cleardoublepage
+
+\chapter{What you did}%\engExpl{Choose your own chapter title to describe this}
+\label{ch:whatYouDid}
+
+% the following sets the TOC entry to break after the & - note you have to include the first letter of the following word as it get swolled by the \texorpdfstring{}{} processing
+\section[Hardware/Software design …/Model/Simulation model \&\texorpdfstring{\\}{ p} parameters/…]{Hardware/Software design …/Model/Simulation model \& parameters/…}
+
+
+\section{Implementation …/Modeling/Simulation/…}
+\label{sec:implementationDetails}
+
+
+\cleardoublepage
+\chapter{Results and Analysis}
+\label{ch:resultsAndAnalysis}
+
+
+\section{Major results}
+
+
+\section{Reliability Analysis}
+
+
+\section{Validity Analysis}
+
+
+\cleardoublepage
+
+
+\chapter{Discussion}
+\label{ch:discussion}
+
+
+\cleardoublepage
+
+
+\chapter{Conclusions and Future work}
+\label{ch:conclusionsAndFutureWork}
+
+
+\section{Conclusions}
+\label{sec:conclusions}
+
+
+\section{Limitations}
+\label{sec:limitations}
+
+
+\section{Future work}
+\label{sec:futureWork}
+
+
+%\subsection{What has been left undone?}
+%\label{what-has-been-left-undone}
+
+
+%\subsubsection{Cost analysis}
+
+
+%\subsubsection{Security}
+
+
+\section{Reflections}
+\label{sec:reflections}
+
+
+\cleardoublepage
+
+% Print the bibliography (and make it appear in the table of contents)
+\renewcommand{\bibname}{References}
+\ifbiblatex
+    \printbibliography[heading=bibintoc]
+\else
+    \phantomsection  % make it include a hyperref
+    \addcontentsline{toc}{chapter}{References}
+    \bibliography{references}
+\fi
+
+
+
+%If you do not have an appendix, do not include the \textbackslash cleardoublepage command below; otherwise, the last page number in the metadata will be one too large.
+%\cleardoublepage
+%\appendix
+%\renewcommand{\chaptermark}[1]{\markboth{Appendix \thechapter\relax:\thinspace\relax#1}{}}
+%\chapter{Supporting materials}
+%\label{sec:supportingMaterial}
+
+\cleardoublepage
+
+
+%% The following label is necessary for computing the last page number of the body of the report to include in the "For DIVA" information
+\label{pg:lastPageofMainmatter}
+
+\cleardoublepage
+\clearpage\thispagestyle{empty}\mbox{} % empty page with backcover on the other side
+\kthbackcover
+\fancyhead{}  % Do not use header on this extra page or pages
+\section*{€€€€ For DIVA €€€€}
+\lstset{numbers=none} %% remove any list line numbering
+%\divainfo{pg:lastPageofPreface}{pg:lastPageofMainmatter}
+
+% If there is an acronyms.tex file,
+% add it to the end of the For DIVA information
+% so that it can be used with the abstracts
+% Note that the option "nolol" stops it from being listed in the List of Listings
+
+% The following bit of ugliness is because of the problems PDFLaTeX has handling a non-breaking hyphen
+% unless it is converted to UTF-8 encoding.
+% If you do not use such characters in your acronyms, this could be simplified.
+\ifxeorlua
+\IfFileExists{lib/acronyms.tex}{
+\section*{acronyms.tex}
+\lstinputlisting[language={[LaTeX]TeX}, nolol, basicstyle=\ttfamily\color{black},
+commentstyle=\color{black}, backgroundcolor=\color{white}]{lib/acronyms.tex}
+}
+{}
+\else
+\IfFileExists{lib/acronyms-for-pdflatex.tex}{
+\section*{acronyms.tex}
+\lstinputlisting[language={[LaTeX]TeX}, nolol, basicstyle=\ttfamily\color{black},
+commentstyle=\color{black}, backgroundcolor=\color{white}]{lib/acronyms-for-pdflatex.tex}
+}
+{}
+\fi
+
+
+\end{document}

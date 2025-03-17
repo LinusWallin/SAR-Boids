@@ -1,0 +1,236 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Packages %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% The following is for use with the KTH cover when not using XeLaTeX or LuaLaTeX
+\ifxeorlua\relax
+\else
+\usepackage[scaled]{helvet}
+\fi
+
+%% The following are needed for generating the DiVA page(s)
+\usepackage[force-eol=true]{scontents}              %% Needed to save lang, abstract, and keywords
+\usepackage{pgffor}                 %% includes the foreach loop
+
+%% Basic packages
+
+%% Links
+\usepackage{xurl}                %% Support for breaking URLs
+
+%% Colorize
+%\usepackage{color}
+\PassOptionsToPackage{dvipsnames, svgnames, table}{xcolor}
+\usepackage{xcolor}
+
+\usepackage[normalem]{ulem}
+\usepackage{soul}
+\usepackage{xspace}
+\usepackage{braket}
+
+% to support units and decimal aligned columns in tables
+\usepackage[locale=US]{siunitx}
+
+\usepackage{balance}
+\usepackage{stmaryrd}
+\usepackage{booktabs}
+\usepackage{graphicx}	        %% Support for images
+\usepackage{multirow}	        %% Support for multirow columns in tables
+\usepackage{tabularx}		    %% For simple table stretching
+\usepackage{mathtools}
+\usepackage{algorithm} 
+\usepackage{algorithmic}  
+\usepackage{amsmath}
+\usepackage[linesnumbered,ruled,vlined,algo2e]{algorithm2e}
+% can't use both algpseudocode and algorithmic packages
+%\usepackage[noend]{algpseudocode}
+%\usepackage{subfig}  %% cannot use both subcaption and subfig packages
+\usepackage{subcaption}
+\usepackage{optidef}
+\usepackage{float}		        %% Support for more flexible floating box positioning
+\usepackage{pifont}
+
+%% some additional useful packages
+% to enable rotated figures
+\usepackage{rotating}	    	%% For text rotating
+\usepackage{array}		        %% For table wrapping
+\usepackage{mdwlist}            %% various list-related commands
+\usepackage{setspace}           %% For fine-grained control over line spacing
+
+
+\usepackage{enumitem}           %% to allow changes to the margins of descriptions
+
+
+%% If you are going to include source code (or code snippets) you can use minted in a listings environment
+\usepackage{listings}		    %% For source code listing
+                                %% For source code highlighting
+%\usepackage[chapter, cache=false]{minted}   %% If you use minted make sure to use the chapter options to do numbering in the chapter
+%%\usemintedstyle{borland}
+
+\usepackage{bytefield}          %% For packet drawings
+
+
+\setlength {\marginparwidth }{2cm} %leave some extra space for todo notes
+% The obeyFinal option means that todonotes will be disables when "final" is added as an option for the documentclass
+\usepackage[obeyFinal]{todonotes}
+\usepackage{notoccite} % do not number captions based on their appearance in the TOC
+
+
+% Footnotes
+\usepackage{perpage}
+\usepackage[perpage,symbol]{footmisc} %% use symbols to ``number'' footnotes and reset which symbol is used first on each page
+%% Removed option "para" to place each footnote on a separate line. This avoids bad stretching of URLs in footnotes.
+
+
+%% Various useful packages
+%%----------------------------------------------------------------------------
+%%   pcap2tex stuff
+%%----------------------------------------------------------------------------
+\usepackage{tikz}
+\usepackage{colortbl}
+\usetikzlibrary{arrows,decorations.pathmorphing,backgrounds,fit,positioning, decorations.pathreplacing, calc,shapes, patterns}
+\usepackage{pgfmath}	% --math engine
+\newcommand\bmmax{2}
+\usepackage{bm} % bold math
+
+
+%% Managing titles
+% \usepackage[outermarks]{titlesec}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\captionsetup[subfloat]{listofformat=parens}
+
+% to include PDF pages
+%\usepackage{pdfpages}
+
+\usepackage{fvextra}
+\usepackage{csquotes}               %% Recommended by biblatex
+% to provide a float barrier use:
+\usepackage{placeins}
+
+\usepackage{comment}  %% Provides a comment environment
+\usepackage{refcount}   %% to be able to get an expandable \getpagerefnumber
+
+% for experiments with new cover
+\usepackage{eso-pic}
+\usepackage[absolute,overlay]{textpos}
+
+% when the package is used, it draws boxes on the page showing the text, footnote, header, and margin regions of the page
+%\usepackage{showframe}  
+%\usepackage{printlen} % defines the printlength command to print out values of latex variable
+
+\usepackage{xparse}  % to use for commands with optional arguments
+
+\ifnomenclature
+\usepackage[nocfg]{nomencl}  %% include refpage, refeq, to have page number and equation number for each nomenclature
+\fi
+
+\usepackage{longtable}  % For multipage tables
+\usepackage{lscape}     % For landscape pages
+\usepackage{needspace}  % to specify needed space, for example to keep listing heading with the listing
+\usepackage{metalogo}   % for \XeLaTeX and \LuaLaTeX logos
+
+% to define a command\B to bold font entries in a table
+% based on https://tex.stackexchange.com/questions/469559/bold-entries-in-table-with-s-column-type
+\usepackage{etoolbox}
+\renewcommand{\bfseries}{\fontseries{b}\selectfont}
+\robustify\bfseries
+\newrobustcmd{\B}{\bfseries}
+
+% To be able to have conditional text #2 that will be included IFF a label is defined, else #3
+\newcommand{\iflabelexists}[3]{\ifcsundef{r@#1}{#3}{#2}}
+
+
+% to allow more than 16 files to be open at once
+% Package morewrites Warning: The morewrites package is unnecessary in LuaTeX.
+\ifluatex\empty
+\else
+\usepackage{morewrites}
+\fi
+
+%%% The lines below are for use with the pgfplots examples
+\usepackage{svg}
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+\pgfplotsset{compat=1.12}
+ 
+
+ 
+%https://tex.stackexchange.com/questions/554732/bar-plot-does-not-use-defined-color-cycle-list
+%\pgfplotscreateplotcyclelist{mycolors}{
+%    {blue,fill=blue!30!white,mark=none},
+%    {green,fill=green!30!white,mark=none},
+%    {brown!60!black,fill=brown!30!white,mark=none},
+%    {black,fill=gray,mark=none}
+%}
+
+    \tikzset{
+        hatch distance/.store in=\hatchdistance,
+        hatch distance=10pt,
+        hatch thickness/.store in=\hatchthickness,
+        hatch thickness=2pt
+    }
+
+    \makeatletter
+    \pgfdeclarepatternformonly[\hatchdistance,\hatchthickness]{flexible hatch}
+    {\pgfqpoint{0pt}{0pt}}
+    {\pgfqpoint{\hatchdistance}{\hatchdistance}}
+    {\pgfpoint{\hatchdistance-1pt}{\hatchdistance-1pt}}%
+    {
+        \pgfsetcolor{\tikz@pattern@color}
+        \pgfsetlinewidth{\hatchthickness}
+        \pgfpathmoveto{\pgfqpoint{0pt}{0pt}}
+        \pgfpathlineto{\pgfqpoint{\hatchdistance}{\hatchdistance}}
+        \pgfusepath{stroke}
+    }
+\makeatother
+%\usetikzlibrary{patterns, patterns.meta}
+%\usetikzlibrary{decorations.pathreplacing}
+% high contrast colors: https://venngage.com/tools/accessible-color-palette-generator
+
+%#1d138a, #ffffff
+%#3829bc, #ffffff
+%#c44601, #ffffff
+%#008e4a, #000000
+%#026526, #ffffff
+%https://latex-tutorial.com/color-latex/
+\definecolor{color1bg}{HTML}{1954a6}
+\colorlet{color1bgFill}{color1bg!30!white}
+\colorlet{color1bgDarkFill}{color1bg!90!white}
+
+\definecolor{color2bg}{HTML}{24a0d8}
+\colorlet{color2bgFill}{color2bg!30!white}
+\colorlet{color2bgDarkFill}{color2bg!90!white}
+
+\definecolor{color3bg}{HTML}{d85497}
+\colorlet{color3bgFill}{color3bg!30!white}
+\colorlet{color3bgDarkFill}{color3bg!90!white}
+
+\definecolor{color4bg}{HTML}{b0c92b}
+\colorlet{color4bgFill}{color4bg!30!white}
+\colorlet{color4bgDarkFill}{color4bg!90!white}
+
+\definecolor{color5bg}{HTML}{63666a}
+\colorlet{color5bgFill}{color5bg!30!white}
+\colorlet{color5bgDarkFill}{color5bg!90!white}
+
+\pgfplotscreateplotcyclelist{rustcolors}{
+  {color1bg,mark=none, pattern=
+  %{flexible hatch}
+  {crosshatch}
+  ,pattern color=color1bg},
+  {color2bg,mark=none, pattern={vertical lines}, pattern color=color2bg},{color3bg,mark=none, pattern={horizontal lines}, pattern color=color3bg},{color4bg,mark=none, pattern={north east lines}, pattern color=color4bg},{color5bg,fill=color5bg,mark=none},
+  {black,fill=gray,mark=none}
+}
+
+\pgfplotsset{cycle list name=rustcolors}
+\pgfplotsset{/pgfplots/bar cycle list/.style={/pgfplots/cycle list name={rustcolors}}}
+
+\usepackage{makecell}
+
+%\usepackage[table]{xcolor}
+
+\usepackage{pgf-pie}
+
+\usetikzlibrary{tikzmark}
+
+%%% The lines below are for setting text that includes Japanese
+\ifluatex
+\usepackage{luatexja-fontspec}
+\setmainjfont{IPAexMincho} % A high quality Japanese font preinstalled in TeX Live
+\fi

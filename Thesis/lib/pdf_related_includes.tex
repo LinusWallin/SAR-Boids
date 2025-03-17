@@ -1,0 +1,158 @@
+% This file contains the LaTeX to add information to the PDF file (specifically, author(s), title(s), and keywords
+% It uses the hyperref package and should be included before the \begin{document}
+%
+% I want to acknowledge the inspiration of Karl Voit's template for TU Graz that inspired me to add the PDF document information
+% For more information about his template see https://github.com/novoid/LaTeX-KOMA-template
+% Note that this template does not use anything from his template other than the names of the information for the PDF meta fields, i.e., mytitle, myauthor, and mykeywords together with the idea of defining the corresponding newcommand to set the relevant hyperref parameters.
+
+\makeatletter
+\ifx\@subtitle\@empty
+    \newcommand{\mytitle}{\@title}
+\else
+    \ifinswedish
+        \newcommand{\mytitle}{\@title\xspace–\xspace\@subtitle}
+    \else
+        \newcommand{\mytitle}{\@title: \@subtitle}
+    \fi
+\fi
+\makeatother
+
+% Put the alternative title (and subtitle) into the PDF Subject meta
+\makeatletter
+\ifx\@altsubtitle\@empty\relax
+    \newcommand{\myalttitle}{\@alttitle}
+\else
+    \ifinswedish
+        \newcommand{\myalttitle}{\@alttitle: \@altsubtitle}
+    \else
+    \newcommand{\myalttitle}{\@alttitle\xspace–\xspace\@altsubtitle}
+    \fi
+    
+\fi
+\makeatother
+\hypersetup{
+     pdfsubject={\myalttitle}        % Subject field
+}
+
+\ifinswedish
+\XMPLangAlt{en}{pdfsubject={\myalttitle}}
+\else
+\XMPLangAlt{sv}{pdfsubject={\myalttitle}}
+\fi
+
+
+\ifinswedish
+\hypersetup{%
+    pdflang={sv},
+    pdfmetalang={sv},
+    pdftitle={\mytitle}        % Title field
+}
+\XMPLangAlt{en}{pdftitle={\myalttitle}}
+\else
+\hypersetup{%
+    pdflang={en},
+    pdfmetalang={en},
+    pdftitle={\mytitle}        % Title field
+}
+\XMPLangAlt{sv}{pdftitle={\myalttitle}}
+\fi
+
+\makeatletter
+\ltx@ifpackageloaded{hyperxmp}{
+\ifx\@secondAuthorsLastname\@empty
+% Note that \hyxmp@comma is used explicitly rather than \xmpcomma
+% As the later will simply turn into a comma in this context.
+\StrSubstitute{\@authorsLastname}{,}{\hyxmp@comma}[\@authorsLastnameXMP]
+    \newcommand{\myauthor}{\xmpquote{\@authorsFirstname\space\@authorsLastnameXMP}} 
+\else
+% Note that \hyxmp@comma is used explicitly rather than \xmpcomma
+% As the later will simply turn into a comma in this context.
+\StrSubstitute{\@authorsLastname}{,}{\hyxmp@comma}[\@authorsLastnameXMP]
+\StrSubstitute{\@secondAuthorsLastname}{,}{\hyxmp@comma}[\@secondAuthorsLastnameXMP]
+    \newcommand{\myauthor}{\xmpquote{\@authorsFirstname\space\@authorsLastnameXMP},
+\xmpquote{\@secondAuthorsFirstname\space\@secondAuthorsLastnameXMP}}
+\fi
+}{
+\ifx\@secondAuthorsLastname\@empty
+    \newcommand{\myauthor}{\@authorsFirstname\space\@authorsLastname} 
+\else
+    \newcommand{\myauthor}{\@authorsFirstname\space\@authorsLastname,
+\space\@secondAuthorsFirstname\space\@secondAuthorsLastname}
+\fi
+}% end of ifpackage conditional
+\makeatother
+
+\hypersetup{
+     pdfauthor={\myauthor}      % Author field
+}
+
+
+\makeatletter
+\ifx\@EnglishKeywords\@empty
+    \ifx\@SwedishKeywords\@empty
+        \newcommand{\mykeywords}{}
+    \else
+    \newcommand{\mykeywords}{\@SwedishKeywords}
+    \fi
+\else
+    \ifx\@SwedishKeywords\@empty
+        \newcommand{\mykeywords}{\@EnglishKeywords}
+    \else
+        \ifinswedish
+            \newcommand{\mykeywords}{\@SwedishKeywords, \@EnglishKeywords}
+        \else
+            \newcommand{\mykeywords}{\@EnglishKeywords, \@SwedishKeywords}
+        \fi
+    \fi
+\fi
+\makeatother
+
+\hypersetup{
+     pdfkeywords={\mykeywords}        % Keywords field
+}        
+% I have _not_ set the following fields:
+%    pdfcreator             % Creator field
+%    pdfproducer            % Producer field
+
+%% Note that the copyright information is added to the PDF file inside bookinfo{}
+%% as until then, the copyright information is unknown.
+
+% Put the alternative title (and subtitle) into the PDF Subject meta
+\makeatletter
+\ifx\@secondkthid\@empty\relax
+    \newcommand{\mykthids}{author: \@kthid}
+\else
+    \newcommand{\mykthids}{author: \@kthid,\xspace
+    secondauthor: \@secondkthid}
+\fi
+\makeatother
+
+\hypersetup{
+     pdfcontactemail={\mykthids}        % Subject field
+}
+
+% Add the TRITA number to the metadata
+% Get and store information about the series and the number within this series, i.e, TRITA numbers
+%"Series": \{
+%	"Title of series": "TRITA-ICT-EX"
+%	"No. in series": "2019:00"
+\makeatletter
+\ifinswedish
+\hypersetup{
+        pdfvolumenum={\@thesisSeries},        % put the series in the volume field
+        pdfissuenum={\@thesisSeriesNumber},
+        pdfpublisher={Kungliga Tekniska högskolan (KTH)},
+        pdfpubtype={report}
+}
+\else
+\hypersetup{
+        pdfvolumenum={\@thesisSeries},        % put the series in the volume field
+        pdfissuenum={\@thesisSeriesNumber},
+        pdfpublisher={KTH Royal Institute of Technology},
+        pdfpubtype={report}
+}
+\fi
+\makeatother
+
+
+% summary
