@@ -11,6 +11,7 @@ public class Simulation : MonoBehaviour
     const int threadGroupSize = 1024;
     public BoidSettings boidSettings;
     public GameObject boidPrefab;
+    public GameObject[] obstacles;
     public Transform boundingBox;
     public ComputeShader compute;
     Boid[] boids;
@@ -133,10 +134,8 @@ public class Simulation : MonoBehaviour
             }
         }
 
-        int sepRatio = 2;
-
-        int boidCols = (int) Mathf.Floor(planeSize.x / (sepRatio * boidSettings.boidRadius));
-        int boidRows = (int) Mathf.Floor(planeSize.y / (sepRatio * boidSettings.boidRadius));
+        int boidCols = (int) Mathf.Floor(planeSize.x / (boidSettings.sepRatio * boidSettings.boidRadius));
+        int boidRows = (int) Mathf.Floor(planeSize.y / (boidSettings.sepRatio * boidSettings.boidRadius));
         int numGhostBoids = boidRows * boidCols;
 
         Vector2 botLeft = new Vector2(
