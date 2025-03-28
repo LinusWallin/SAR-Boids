@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 /// <summary>
 /// Simulates the boids in the search and rescue scenario
@@ -56,6 +58,9 @@ public class Simulation : MonoBehaviour
         for (int j = 0; j < numGhosts; j++) {
             boids[boidSettings.numBoids + j] = boidCMs[j];
         }
+
+        //Isolated Danger Marks
+        CreateIDMs(obstacles[0]);
 
     }
 
@@ -188,6 +193,113 @@ public class Simulation : MonoBehaviour
 
     }
 
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="obstacle"></param>
+    void CreateIDMs(GameObject obstacle) {
+        List<Boid> boidIDMs = new List<Boid>();
+        MeshCollider meshCollider = obstacle.GetComponent<MeshCollider>();
+        Bounds bounds =  meshCollider.bounds;
+        Vector3 center = bounds.center;
+        Vector3 extents = bounds.extents;
+        Vector3 boidsInDir = (bounds.extents*2)/(boidSettings.boidRadius*boidSettings.sepRatio);
+        boidsInDir = new Vector3(
+            Mathf.Floor(boidsInDir.x), //boidsInDir.x < 1 ? 1 : 
+            Mathf.Floor(boidsInDir.y), //boidsInDir.y < 1 ? 1 : 
+            Mathf.Floor(boidsInDir.z) //boidsInDir.z < 1 ? 1 : 
+        );
+
+        // Faces of game object
+        // left, right, top, bottom, front, back
+        // center, normal, row direction, column direction
+        FaceData[] faces = new FaceData[] {
+            new FaceData(
+                center + new Vector3(extents.x, 0, 0),
+                Vector3.right,
+                Vector3.forward,
+                Vector3.up
+            ),
+            new FaceData(
+                center - new Vector3(extents.x, 0, 0),
+                Vector3.left,
+                Vector3.back,
+                Vector3.up
+            ),
+            new FaceData(
+                center + new Vector3(0, extents.y, 0),
+                Vector3.up,
+                Vector3.right,
+                Vector3.back
+            ),
+            new FaceData(
+                center - new Vector3(0, extents.y, 0),
+                Vector3.down,
+                Vector3.left,
+                Vector3.back
+            ),
+            new FaceData(
+                center + new Vector3(0, 0, extents.z),
+                Vector3.forward,
+                Vector3.right,
+                Vector3.up
+            ),
+            new FaceData(
+                center - new Vector3(0, 0, extents.z),
+                Vector3.back,
+                Vector3.left,
+                Vector3.up
+            )
+        };
+
+        foreach (FaceData face in faces) {
+            Vector3 faceCenter = face.center;
+            Vector3 normal = face.normal;
+            Vector3 rowDir = face.rowDir;
+            Vector3 colDir = face.colDir;
+
+            Vector3 rowStepSize = rowDir * boidSettings.boidRadius * boidSettings.sepRatio;
+            Vector3 colStepSize = colDir * boidSettings.boidRadius * boidSettings.sepRatio;
+            Vector3 rowExt = Vector3.Scale(rowDir, extents);
+            Vector3 colExt = Vector3.Scale(colDir, extents);
+            Vector3 botLeft = faceCenter - rowExt - colExt;
+
+            int numRows = Mathf.Abs((int)Vector3.Dot(rowDir, boidsInDir));
+            int numCols = Mathf.Abs((int)Vector3.Dot(colDir, boidsInDir));
+            
+            Vector3 gridStart = botLeft;
+
+            if (numRows == 0) {
+                gridStart += rowExt;
+                numRows = 1;
+            } else {
+                gridStart += (rowStepSize / 2);
+            }
+            if (numCols == 0) {
+                gridStart += colExt;
+                numCols = 1;
+            } else {
+                gridStart += (colStepSize / 2);
+            }
+            
+            for (int x = 0; x < numRows; x++) {
+                for (int y = 0; y < numCols; y++) {
+                    Vector3 posIDM = gridStart + rowStepSize * x + colStepSize * y;
+                    GameObject ghostBoid = Instantiate(boidPrefab, transform);
+                    ghostBoid.transform.position = posIDM;
+                    boidIDMs.Add(ghostBoid.GetComponent<Boid>());
+                    boidIDMs[boidIDMs.Count-1].Init(
+                        boidSettings,
+                        normal,
+                        0,
+                        false
+                    );
+                }
+            }
+        }
+    }
+
     void Update()
     {
         if (boids != null) {
@@ -230,6 +342,20 @@ public class Simulation : MonoBehaviour
             }
 
             boidBuffer.Release();
+        }
+    }
+
+    public struct FaceData {
+        public Vector3 center;
+        public Vector3 normal;
+        public Vector3 rowDir;
+        public Vector3 colDir;
+
+        public FaceData(Vector3 center, Vector3 normal, Vector3 rowDir, Vector3 colDir) {
+            this.center = center;
+            this.normal = normal;
+            this.rowDir = rowDir;
+            this.colDir = colDir;
         }
     }
 
