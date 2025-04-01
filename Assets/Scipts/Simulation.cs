@@ -200,9 +200,6 @@ public class Simulation : MonoBehaviour
     /// </summary>
     /// <param name="obstacle"></param>
     void CreateIDMs(GameObject obstacle) {
-        //Quaternion originalRot = obstacle.transform.rotation;
-        //obstacle.transform.rotation = Quaternion.identity;
-
         List<Boid> boidIDMs = new List<Boid>();
         MeshCollider meshCollider = obstacle.GetComponent<MeshCollider>();
         Bounds bounds =  meshCollider.sharedMesh.bounds; //Gets local bounds of obstacle
