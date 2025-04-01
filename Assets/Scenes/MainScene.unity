@@ -602,6 +602,9 @@ MonoBehaviour:
   - {fileID: 911735126}
   boundingBox: {fileID: 2050511647}
   compute: {fileID: 7200000, guid: 573047abd76a1ec498776d07e286132e, type: 3}
+  obstacleMask:
+    serializedVersion: 2
+    m_Bits: 64
 --- !u!4 &651469435
 Transform:
   m_ObjectHideFlags: 0
@@ -766,7 +769,7 @@ GameObject:
   - component: {fileID: 911735129}
   - component: {fileID: 911735128}
   - component: {fileID: 911735131}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Cube
   m_TagString: Untagged
   m_Icon: {fileID: 0}

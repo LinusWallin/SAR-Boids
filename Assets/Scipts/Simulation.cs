@@ -16,6 +16,7 @@ public class Simulation : MonoBehaviour
     public GameObject[] obstacles;
     public Transform boundingBox;
     public ComputeShader compute;
+    [SerializeField] private LayerMask obstacleMask;
     Boid[] boids;
     Boid[] aliveBoids;
     Boid[] boidCMs;
@@ -199,16 +200,19 @@ public class Simulation : MonoBehaviour
     /// </summary>
     /// <param name="obstacle"></param>
     void CreateIDMs(GameObject obstacle) {
+        //Quaternion originalRot = obstacle.transform.rotation;
+        //obstacle.transform.rotation = Quaternion.identity;
+
         List<Boid> boidIDMs = new List<Boid>();
         MeshCollider meshCollider = obstacle.GetComponent<MeshCollider>();
-        Bounds bounds =  meshCollider.bounds;
+        Bounds bounds =  meshCollider.sharedMesh.bounds; //Gets local bounds of obstacle
         Vector3 center = bounds.center;
         Vector3 extents = bounds.extents;
         Vector3 boidsInDir = (bounds.extents*2)/(boidSettings.boidRadius*boidSettings.sepRatio);
         boidsInDir = new Vector3(
-            Mathf.Floor(boidsInDir.x), //boidsInDir.x < 1 ? 1 : 
-            Mathf.Floor(boidsInDir.y), //boidsInDir.y < 1 ? 1 : 
-            Mathf.Floor(boidsInDir.z) //boidsInDir.z < 1 ? 1 : 
+            Mathf.Floor(boidsInDir.x),
+            Mathf.Floor(boidsInDir.y),
+            Mathf.Floor(boidsInDir.z)
         );
 
         // Faces of game object
@@ -216,36 +220,42 @@ public class Simulation : MonoBehaviour
         // center, normal, row direction, column direction
         FaceData[] faces = new FaceData[] {
             new FaceData(
+                obstacle,
                 center + new Vector3(extents.x, 0, 0),
                 Vector3.right,
                 Vector3.forward,
                 Vector3.up
             ),
             new FaceData(
+                obstacle,
                 center - new Vector3(extents.x, 0, 0),
                 Vector3.left,
                 Vector3.back,
                 Vector3.up
             ),
             new FaceData(
+                obstacle,
                 center + new Vector3(0, extents.y, 0),
                 Vector3.up,
                 Vector3.right,
                 Vector3.back
             ),
             new FaceData(
+                obstacle,
                 center - new Vector3(0, extents.y, 0),
                 Vector3.down,
                 Vector3.left,
                 Vector3.back
             ),
             new FaceData(
+                obstacle,
                 center + new Vector3(0, 0, extents.z),
                 Vector3.forward,
                 Vector3.right,
                 Vector3.up
             ),
             new FaceData(
+                obstacle,
                 center - new Vector3(0, 0, extents.z),
                 Vector3.back,
                 Vector3.left,
@@ -286,12 +296,27 @@ public class Simulation : MonoBehaviour
             for (int x = 0; x < numRows; x++) {
                 for (int y = 0; y < numCols; y++) {
                     Vector3 posIDM = gridStart + rowStepSize * x + colStepSize * y;
-                    GameObject ghostBoid = Instantiate(boidPrefab, transform);
+                    GameObject ghostBoid = Instantiate(boidPrefab, obstacle.transform);
+                    RaycastHit hit;
+                    Vector3 surfaceNormal = normal;
+                    if (Physics.Raycast(posIDM + normal, -normal, out hit, obstacleMask)) {
+                        surfaceNormal = hit.normal;
+                        posIDM = hit.point;
+                        Debug.DrawLine(posIDM + normal, hit.point, Color.red, 1000000);
+                    }
+
                     ghostBoid.transform.position = posIDM;
+                    Vector3 scale = obstacle.transform.localScale;
+                    Vector3 boidScale = boidPrefab.transform.localScale;
+                    ghostBoid.transform.localScale = new Vector3(
+                        boidScale.x/scale.x, 
+                        boidScale.y/scale.y, 
+                        boidScale.z/scale.z
+                    );
                     boidIDMs.Add(ghostBoid.GetComponent<Boid>());
                     boidIDMs[boidIDMs.Count-1].Init(
                         boidSettings,
-                        normal,
+                        surfaceNormal,
                         0,
                         false
                     );
@@ -346,16 +371,18 @@ public class Simulation : MonoBehaviour
     }
 
     public struct FaceData {
+        public GameObject obstacle;
         public Vector3 center;
         public Vector3 normal;
         public Vector3 rowDir;
         public Vector3 colDir;
 
-        public FaceData(Vector3 center, Vector3 normal, Vector3 rowDir, Vector3 colDir) {
-            this.center = center;
-            this.normal = normal;
-            this.rowDir = rowDir;
-            this.colDir = colDir;
+        public FaceData(GameObject obstacle, Vector3 center, Vector3 normal, Vector3 rowDir, Vector3 colDir) {
+            this.obstacle = obstacle;
+            this.center = obstacle.transform.TransformPoint(center);
+            this.normal = obstacle.transform.TransformDirection(normal);
+            this.rowDir = obstacle.transform.TransformDirection(rowDir);
+            this.colDir = obstacle.transform.TransformDirection(colDir);
         }
     }
 
