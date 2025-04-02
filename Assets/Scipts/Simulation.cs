@@ -50,7 +50,15 @@ public class Simulation : MonoBehaviour
             }
         }
 
-        boids = new Boid[boidSettings.numBoids + numGhosts];
+        //Isolated Danger Marks
+        List<Boid> boidIDMs = new List<Boid>();
+        foreach (GameObject obs in obstacles) {
+            boidIDMs = CreateIDMs(obs, boidIDMs);
+        }
+        Boid[] arrayIDM = boidIDMs.ToArray();
+        int numIDMs = arrayIDM.Length;
+
+        boids = new Boid[boidSettings.numBoids + numGhosts + numIDMs];
         
         for (int i = 0; i < boidSettings.numBoids; i++) {
             boids[i] = aliveBoids[i];
@@ -60,8 +68,9 @@ public class Simulation : MonoBehaviour
             boids[boidSettings.numBoids + j] = boidCMs[j];
         }
 
-        //Isolated Danger Marks
-        CreateIDMs(obstacles[0]);
+        for (int k = 0; k < numIDMs; k++) {
+            boids[boidSettings.numBoids + numGhosts + k] = arrayIDM[k];
+        }
 
     }
 
@@ -196,16 +205,19 @@ public class Simulation : MonoBehaviour
 
 
     /// <summary>
-    /// 
+    /// Places ghost boids in a grid formation on the faces
+    /// of a obstacle.
     /// </summary>
-    /// <param name="obstacle"></param>
-    void CreateIDMs(GameObject obstacle) {
-        List<Boid> boidIDMs = new List<Boid>();
+    /// <param name="obstacle">The obstacle which the ghost boids should be placed on</param>
+    /// <param name="boidIDMs">IDMs List to keep track of ghost boids</param>
+    /// <returns>Returns updated IDM List</returns>
+    List<Boid> CreateIDMs(GameObject obstacle, List<Boid> boidIDMs) {
         MeshCollider meshCollider = obstacle.GetComponent<MeshCollider>();
         Bounds bounds =  meshCollider.sharedMesh.bounds; //Gets local bounds of obstacle
         Vector3 center = bounds.center;
         Vector3 extents = bounds.extents;
-        Vector3 boidsInDir = (bounds.extents*2)/(boidSettings.boidRadius*boidSettings.sepRatio);
+        Vector3 gridExtents = Vector3.Scale(extents, obstacle.transform.lossyScale);
+        Vector3 boidsInDir = (gridExtents*2)/(boidSettings.boidRadius*boidSettings.sepRatio);
         boidsInDir = new Vector3(
             Mathf.Floor(boidsInDir.x),
             Mathf.Floor(boidsInDir.y),
@@ -261,13 +273,13 @@ public class Simulation : MonoBehaviour
         };
 
         foreach (FaceData face in faces) {
-            Vector3 faceCenter = face.center;
-            Vector3 normal = face.normal;
-            Vector3 rowDir = face.rowDir;
-            Vector3 colDir = face.colDir;
+            Vector3 faceCenter = obstacle.transform.InverseTransformPoint(face.center);
+            Vector3 normal = obstacle.transform.InverseTransformDirection(face.normal);
+            Vector3 rowDir = obstacle.transform.InverseTransformDirection(face.rowDir);
+            Vector3 colDir = obstacle.transform.InverseTransformDirection(face.colDir);
 
-            Vector3 rowStepSize = rowDir * boidSettings.boidRadius * boidSettings.sepRatio;
-            Vector3 colStepSize = colDir * boidSettings.boidRadius * boidSettings.sepRatio;
+            Vector3 rowStepSize = Utils.Vec3Div(rowDir, obstacle.transform.lossyScale) * (boidSettings.boidRadius * boidSettings.sepRatio);
+            Vector3 colStepSize = Utils.Vec3Div(colDir, obstacle.transform.lossyScale) * (boidSettings.boidRadius * boidSettings.sepRatio);
             Vector3 rowExt = Vector3.Scale(rowDir, extents);
             Vector3 colExt = Vector3.Scale(colDir, extents);
             Vector3 botLeft = faceCenter - rowExt - colExt;
@@ -281,34 +293,37 @@ public class Simulation : MonoBehaviour
                 gridStart += rowExt;
                 numRows = 1;
             } else {
-                gridStart += (rowStepSize / 2);
+                gridStart += rowStepSize / 2;
             }
             if (numCols == 0) {
                 gridStart += colExt;
                 numCols = 1;
             } else {
-                gridStart += (colStepSize / 2);
+                gridStart += colStepSize / 2;
             }
             
             for (int x = 0; x < numRows; x++) {
                 for (int y = 0; y < numCols; y++) {
                     Vector3 posIDM = gridStart + rowStepSize * x + colStepSize * y;
-                    GameObject ghostBoid = Instantiate(boidPrefab, obstacle.transform);
+                    GameObject ghostBoid = Instantiate(boidPrefab, transform);
                     RaycastHit hit;
                     Vector3 surfaceNormal = normal;
-                    if (Physics.Raycast(posIDM + normal, -normal, out hit, obstacleMask)) {
+                    Vector3 globalPos = obstacle.transform.TransformPoint(posIDM);
+                    Vector3 globalNormal = obstacle.transform.TransformDirection(normal);
+                    if (Physics.Raycast(globalPos + globalNormal, -globalNormal, out hit, obstacleMask)) {
                         surfaceNormal = hit.normal;
                         posIDM = hit.point;
-                        Debug.DrawLine(posIDM + normal, hit.point, Color.red, 1000000);
+                        Debug.DrawLine(globalPos + globalNormal, hit.point, Color.red, 10000);
                     }
 
                     ghostBoid.transform.position = posIDM;
-                    Vector3 scale = obstacle.transform.localScale;
                     Vector3 boidScale = boidPrefab.transform.localScale;
-                    ghostBoid.transform.localScale = new Vector3(
-                        boidScale.x/scale.x, 
-                        boidScale.y/scale.y, 
-                        boidScale.z/scale.z
+                    float maxScale = Mathf.Max(
+                        Mathf.Max(
+                            obstacle.transform.localScale.x,
+                            obstacle.transform.localScale.y
+                        ),
+                        obstacle.transform.localScale.z
                     );
                     boidIDMs.Add(ghostBoid.GetComponent<Boid>());
                     boidIDMs[boidIDMs.Count-1].Init(
@@ -320,6 +335,7 @@ public class Simulation : MonoBehaviour
                 }
             }
         }
+        return boidIDMs;
     }
 
     void Update()
