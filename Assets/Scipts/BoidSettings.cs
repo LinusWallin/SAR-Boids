@@ -12,6 +12,7 @@ public class BoidSettings : ScriptableObject
     public int startCols;
     public int startRows;
     public int startDepth;
+    public int sepRatio;
     public float boidRadius;
     
     public float minSpeed;
