@@ -13,6 +13,7 @@ public class BoidSettings : ScriptableObject
     public int startRows;
     public int startDepth;
     public int sepRatio;
+    public int leaders;
     public float boidRadius;
     
     public float minSpeed;

@@ -16,6 +16,7 @@ public class Simulation : MonoBehaviour
     public GameObject[] obstacles;
     public Transform boundingBox;
     public ComputeShader compute;
+    [SerializeField] private GameObject target;
     [SerializeField] private LayerMask obstacleMask;
     Boid[] boids;
     Boid[] aliveBoids;
@@ -58,25 +59,25 @@ public class Simulation : MonoBehaviour
         Boid[] arrayIDM = boidIDMs.ToArray();
         int numIDMs = arrayIDM.Length;
 
-        boids = new Boid[boidSettings.numBoids + numGhosts + numIDMs];
+        boids = new Boid[boidSettings.numBoids + boidSettings.leaders + numGhosts + numIDMs];
         
-        for (int i = 0; i < boidSettings.numBoids; i++) {
+        for (int i = 0; i < boidSettings.numBoids + boidSettings.leaders; i++) {
             boids[i] = aliveBoids[i];
         }
 
         for (int j = 0; j < numGhosts; j++) {
-            boids[boidSettings.numBoids + j] = boidCMs[j];
+            boids[boidSettings.numBoids + boidSettings.leaders + j] = boidCMs[j];
         }
 
         for (int k = 0; k < numIDMs; k++) {
-            boids[boidSettings.numBoids + numGhosts + k] = arrayIDM[k];
+            boids[boidSettings.numBoids + boidSettings.leaders + numGhosts + k] = arrayIDM[k];
         }
 
     }
 
     void SpawnBoids ()
     {
-        aliveBoids = new Boid[boidSettings.numBoids];
+        aliveBoids = new Boid[boidSettings.numBoids + boidSettings.leaders];
         for (int i = 0; i < boidSettings.numBoids; i++) {
             GameObject b = Instantiate(boidPrefab, transform);
             b.transform.position = new Vector3(
@@ -98,6 +99,36 @@ public class Simulation : MonoBehaviour
                 true
             );
         }
+        int[] leaderIndices = RandomBoidSubset(aliveBoids.Length, boidSettings.leaders);
+        int l = 0;
+        foreach (int leaderIdx in leaderIndices) {
+            Transform boidTransform = aliveBoids[leaderIdx].GetComponent<Boid>().transform;
+            GameObject leader = Instantiate(boidPrefab, boidTransform);
+            Vector3 leaderDir = target.transform.position - boidTransform.position;
+            aliveBoids[boidSettings.numBoids + l] = leader.GetComponent<Boid>();
+            aliveBoids[boidSettings.numBoids + l].transform.localScale = Vector3.one;
+            aliveBoids[boidSettings.numBoids + l].Init(
+                boidSettings,
+                leaderDir,
+                0,
+                false
+            );
+            l++;
+        }
+    }
+
+    private int[] RandomBoidSubset(int arrLen, int subsetSize) {
+        HashSet<int> indices = new HashSet<int>();
+        int[] subset = new int[subsetSize];
+
+        while (indices.Count < subsetSize) {
+            int idx = Random.Range(0, arrLen - 1);
+            if (indices.Add(idx)) {
+                subset[indices.Count - 1] = idx;
+            }
+        }
+
+        return subset;
     }
 
     /// <summary>

@@ -17,6 +17,7 @@ MonoBehaviour:
   startRows: 2
   startDepth: 1
   sepRatio: 2
+  leaders: 1
   boidRadius: 5
   minSpeed: 2
   maxSpeed: 5
