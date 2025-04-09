@@ -59,18 +59,18 @@ public class Simulation : MonoBehaviour
         Boid[] arrayIDM = boidIDMs.ToArray();
         int numIDMs = arrayIDM.Length;
 
-        boids = new Boid[boidSettings.numBoids + boidSettings.leaders + numGhosts + numIDMs];
+        boids = new Boid[boidSettings.numBoids + numGhosts + numIDMs];
         
-        for (int i = 0; i < boidSettings.numBoids + boidSettings.leaders; i++) {
+        for (int i = 0; i < boidSettings.numBoids; i++) {
             boids[i] = aliveBoids[i];
         }
 
         for (int j = 0; j < numGhosts; j++) {
-            boids[boidSettings.numBoids + boidSettings.leaders + j] = boidCMs[j];
+            boids[boidSettings.numBoids + j] = boidCMs[j];
         }
 
         for (int k = 0; k < numIDMs; k++) {
-            boids[boidSettings.numBoids + boidSettings.leaders + numGhosts + k] = arrayIDM[k];
+            boids[boidSettings.numBoids + numGhosts + k] = arrayIDM[k];
         }
 
     }
@@ -100,20 +100,10 @@ public class Simulation : MonoBehaviour
             );
         }
         int[] leaderIndices = RandomBoidSubset(aliveBoids.Length, boidSettings.leaders);
-        int l = 0;
         foreach (int leaderIdx in leaderIndices) {
-            Transform boidTransform = aliveBoids[leaderIdx].GetComponent<Boid>().transform;
-            GameObject leader = Instantiate(boidPrefab, boidTransform);
-            Vector3 leaderDir = target.transform.position - boidTransform.position;
-            aliveBoids[boidSettings.numBoids + l] = leader.GetComponent<Boid>();
-            aliveBoids[boidSettings.numBoids + l].transform.localScale = Vector3.one;
-            aliveBoids[boidSettings.numBoids + l].Init(
-                boidSettings,
-                leaderDir,
-                0,
-                false
-            );
-            l++;
+            Boid leaderBoid = aliveBoids[leaderIdx].GetComponent<Boid>();
+            leaderBoid.isLeader = true;
+            leaderBoid.target = target;
         }
     }
 

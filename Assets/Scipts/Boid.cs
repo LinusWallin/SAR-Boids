@@ -9,6 +9,7 @@ public class Boid : MonoBehaviour
     BoidSettings boidSettings;
 
     public bool isAlive;
+    public bool isLeader;
     public float speed;
     public int numFlockmates;
     public Vector3 direction;
@@ -22,6 +23,7 @@ public class Boid : MonoBehaviour
     public Vector3 alignmentForce;
     public Vector3 cohesionForce;
     public Vector3 flockCenter;
+    public GameObject target;
     
 
     private void Start()
@@ -44,6 +46,7 @@ public class Boid : MonoBehaviour
         this.flockCenter = new Vector3();
 
         transform.forward = direction;
+        isLeader = false;
     }
 
     /// <summary>
@@ -92,7 +95,15 @@ public class Boid : MonoBehaviour
     /// Applies the alignment rule to the boid
     /// </summary>
     private void AlignmentRule() {
-        alignmentForce /= boidSettings.alignmentWeight;
+        if (isLeader && target != null) {
+            Vector3 compassDir = target.transform.position - position;
+            alignmentForce += compassDir;
+        }
+        Vector3 normalizedAlignment = (
+            alignmentForce/
+            (boidSettings.numBoids - 1 + (isLeader ? 1 : 0))
+        ).normalized;
+        alignmentForce = normalizedAlignment / boidSettings.alignmentWeight;
     }
 
 }
