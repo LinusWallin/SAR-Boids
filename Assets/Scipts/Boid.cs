@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 /// <summary>
@@ -60,14 +61,30 @@ public class Boid : MonoBehaviour
         CohesionRule();
         SeparationRule();
         AlignmentRule();
+        
+        if (isLeader) {
+            Debug.DrawLine(transform.position, transform.position + cohesionForce, Color.red, 0.01f);
+            Debug.DrawLine(transform.position, transform.position + separationForce, Color.blue, 0.01f);
+            Debug.DrawLine(transform.position, transform.position + alignmentForce, Color.green, 0.1f);
+            
+            Debug.DrawLine(transform.position, target.transform.position, Color.yellow, 0.01f);
+        }
 
         acceleration += cohesionForce;
         acceleration += separationForce;
         acceleration += alignmentForce;
 
+        if (isLeader) {
+            Debug.DrawLine(transform.position, transform.position + (acceleration * 4), Color.black, 0.01f);
+            Debug.Log("Direction before: " + direction + ", Acceleration: " + acceleration);
+        }
+        
+
         direction += acceleration * Time.deltaTime;
+        if (isLeader) {Debug.Log("Direction after: " + direction);}
         speed = direction.magnitude;
         direction /= speed;
+        Debug.DrawLine(transform.position, transform.position + (direction * 4), Color.magenta, 0.01f);
         speed = Mathf.Clamp(speed, boidSettings.minSpeed, boidSettings.maxSpeed);
         direction *= speed;
 
@@ -97,13 +114,19 @@ public class Boid : MonoBehaviour
     private void AlignmentRule() {
         if (isLeader && target != null) {
             Vector3 compassDir = target.transform.position - position;
-            alignmentForce += compassDir;
+            alignmentForce += compassDir * 
+            Mathf.Max(
+                1, 
+                boidSettings.numBoids * boidSettings.leaderInfluence
+            );
+            //Debug.DrawLine(transform.position, transform.position + alignmentForce, Color.red, 0.01f);
         }
         Vector3 normalizedAlignment = (
             alignmentForce/
             (boidSettings.numBoids - 1 + (isLeader ? 1 : 0))
         ).normalized;
         alignmentForce = normalizedAlignment / boidSettings.alignmentWeight;
+        //Debug.DrawLine(transform.position, transform.position + alignmentForce, Color.blue, 0.01f);
     }
 
 }

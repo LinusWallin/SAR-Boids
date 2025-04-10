@@ -18,6 +18,7 @@ MonoBehaviour:
   startDepth: 1
   sepRatio: 2
   leaders: 1
+  leaderInfluence: 10000
   boidRadius: 5
   minSpeed: 2
   maxSpeed: 5
