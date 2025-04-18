@@ -17,12 +17,12 @@ MonoBehaviour:
   startRows: 2
   startDepth: 1
   sepRatio: 2
-  leaders: 1
-  leaderInfluence: 10000
-  boidRadius: 5
+  leaders: 8
+  leaderInfluence: 1
+  boidRadius: 3
   minSpeed: 2
-  maxSpeed: 5
-  maxSteerForce: 3
+  maxSpeed: 4
+  maxSteerForce: 1
   separationWeight: 4
   alignmentWeight: 10
   cohesionWeight: 75

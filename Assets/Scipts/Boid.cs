@@ -14,7 +14,6 @@ public class Boid : MonoBehaviour
     public float speed;
     public int numFlockmates;
     public Vector3 direction;
-    public Vector3 acceleration;
     public Vector3 position{
         get {
             return new Vector3(transform.position.x, transform.position.y, transform.position.z);
@@ -56,39 +55,38 @@ public class Boid : MonoBehaviour
     public void UpdateBoid()
     {
 
-        acceleration = new Vector3();
-
         CohesionRule();
         SeparationRule();
         AlignmentRule();
-        
+
+        if (isLeader) {Debug.DrawLine(transform.position, transform.position + direction);}
+
+        Vector3 newDir = new Vector3();
+        newDir += cohesionForce;
+        newDir += separationForce;
+        newDir += alignmentForce;
+        direction = Vector3.RotateTowards(
+            direction, 
+            newDir, 
+            boidSettings.maxSteerForce * Time.deltaTime, 
+            0f
+        );
+        direction = direction.normalized;
+
         if (isLeader) {
             Debug.DrawLine(transform.position, transform.position + cohesionForce, Color.red, 0.01f);
             Debug.DrawLine(transform.position, transform.position + separationForce, Color.blue, 0.01f);
-            Debug.DrawLine(transform.position, transform.position + alignmentForce, Color.green, 0.1f);
+            Debug.DrawLine(transform.position, transform.position + alignmentForce, Color.green, 0.01f);
             
-            Debug.DrawLine(transform.position, target.transform.position, Color.yellow, 0.01f);
+            Debug.DrawLine(transform.position + new Vector3(1,1,1), target.transform.position, Color.yellow, 0.01f);
+            Debug.DrawLine(transform.position, transform.position + alignmentForce + separationForce + cohesionForce, Color.cyan, 0.01f);
         }
 
-        acceleration += cohesionForce;
-        acceleration += separationForce;
-        acceleration += alignmentForce;
-
-        if (isLeader) {
-            Debug.DrawLine(transform.position, transform.position + (acceleration * 4), Color.black, 0.01f);
-            Debug.Log("Direction before: " + direction + ", Acceleration: " + acceleration);
-        }
-        
-
-        direction += acceleration * Time.deltaTime;
         if (isLeader) {Debug.Log("Direction after: " + direction);}
-        speed = direction.magnitude;
-        direction /= speed;
         Debug.DrawLine(transform.position, transform.position + (direction * 4), Color.magenta, 0.01f);
         speed = Mathf.Clamp(speed, boidSettings.minSpeed, boidSettings.maxSpeed);
-        direction *= speed;
 
-        transform.Translate(direction * Time.deltaTime, Space.World);
+        transform.Translate(direction * speed * Time.deltaTime, Space.World);
         transform.forward = direction;
     }
 
@@ -96,7 +94,7 @@ public class Boid : MonoBehaviour
     /// Applies the cohesion rule to the boid
     /// </summary>
     private void CohesionRule() {
-        flockCenter /= numFlockmates;
+        flockCenter /= numFlockmates == 0 ? 1 : numFlockmates;
         Vector3 cohesionDir = (flockCenter - position).normalized;
         cohesionForce = cohesionDir / boidSettings.cohesionWeight;
     }
@@ -117,16 +115,18 @@ public class Boid : MonoBehaviour
             alignmentForce += compassDir * 
             Mathf.Max(
                 1, 
-                boidSettings.numBoids * boidSettings.leaderInfluence
+                numFlockmates * boidSettings.leaderInfluence
             );
-            //Debug.DrawLine(transform.position, transform.position + alignmentForce, Color.red, 0.01f);
         }
+        int totalFlock = numFlockmates + (isLeader ? 1 : 0);
         Vector3 normalizedAlignment = (
             alignmentForce/
-            (boidSettings.numBoids - 1 + (isLeader ? 1 : 0))
+            (totalFlock == 0 ? 1 : totalFlock)
         ).normalized;
+        if (isLeader) {
+            Debug.DrawLine(transform.position, transform.position + normalizedAlignment, Color.gray, 0.01f);
+        }
         alignmentForce = normalizedAlignment / boidSettings.alignmentWeight;
-        //Debug.DrawLine(transform.position, transform.position + alignmentForce, Color.blue, 0.01f);
     }
 
 }

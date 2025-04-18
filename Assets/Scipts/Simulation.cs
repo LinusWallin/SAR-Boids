@@ -77,7 +77,7 @@ public class Simulation : MonoBehaviour
 
     void SpawnBoids ()
     {
-        aliveBoids = new Boid[boidSettings.numBoids + boidSettings.leaders];
+        aliveBoids = new Boid[boidSettings.numBoids];
         for (int i = 0; i < boidSettings.numBoids; i++) {
             GameObject b = Instantiate(boidPrefab, transform);
             b.transform.position = new Vector3(

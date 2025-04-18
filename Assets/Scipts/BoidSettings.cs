@@ -14,7 +14,7 @@ public class BoidSettings : ScriptableObject
     public int startDepth;
     public int sepRatio;
     public int leaders;
-    public int leaderInfluence;
+    public float leaderInfluence;
     public float boidRadius;
     
     public float minSpeed;
