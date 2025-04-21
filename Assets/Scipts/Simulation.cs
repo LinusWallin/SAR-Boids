@@ -16,6 +16,7 @@ public class Simulation : MonoBehaviour
     public GameObject[] obstacles;
     public Transform boundingBox;
     public ComputeShader compute;
+    [SerializeField] private GameObject target;
     [SerializeField] private LayerMask obstacleMask;
     Boid[] boids;
     Boid[] aliveBoids;
@@ -98,6 +99,26 @@ public class Simulation : MonoBehaviour
                 true
             );
         }
+        int[] leaderIndices = RandomBoidSubset(aliveBoids.Length, boidSettings.leaders);
+        foreach (int leaderIdx in leaderIndices) {
+            Boid leaderBoid = aliveBoids[leaderIdx].GetComponent<Boid>();
+            leaderBoid.isLeader = true;
+            leaderBoid.target = target;
+        }
+    }
+
+    private int[] RandomBoidSubset(int arrLen, int subsetSize) {
+        HashSet<int> indices = new HashSet<int>();
+        int[] subset = new int[subsetSize];
+
+        while (indices.Count < subsetSize) {
+            int idx = Random.Range(0, arrLen - 1);
+            if (indices.Add(idx)) {
+                subset[indices.Count - 1] = idx;
+            }
+        }
+
+        return subset;
     }
 
     /// <summary>
@@ -313,7 +334,6 @@ public class Simulation : MonoBehaviour
                     if (Physics.Raycast(globalPos + globalNormal, -globalNormal, out hit, obstacleMask)) {
                         surfaceNormal = hit.normal;
                         posIDM = hit.point;
-                        Debug.DrawLine(globalPos + globalNormal, hit.point, Color.red, 10000);
                     }
 
                     ghostBoid.transform.position = posIDM;

@@ -119,6 +119,37 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &79858125
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 79858126}
+  m_Layer: 0
+  m_Name: TargetLocation
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &79858126
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 79858125}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -8.21469, y: -5.65, z: -51.490852}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &81893141
 GameObject:
   m_ObjectHideFlags: 0
@@ -602,6 +633,7 @@ MonoBehaviour:
   - {fileID: 911735126}
   boundingBox: {fileID: 2050511647}
   compute: {fileID: 7200000, guid: 573047abd76a1ec498776d07e286132e, type: 3}
+  target: {fileID: 79858125}
   obstacleMask:
     serializedVersion: 2
     m_Bits: 64
@@ -1239,3 +1271,4 @@ SceneRoots:
   - {fileID: 2050511647}
   - {fileID: 651469435}
   - {fileID: 911735130}
+  - {fileID: 79858126}

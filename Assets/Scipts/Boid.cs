@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 /// <summary>
@@ -9,10 +10,10 @@ public class Boid : MonoBehaviour
     BoidSettings boidSettings;
 
     public bool isAlive;
+    public bool isLeader;
     public float speed;
     public int numFlockmates;
     public Vector3 direction;
-    public Vector3 acceleration;
     public Vector3 position{
         get {
             return new Vector3(transform.position.x, transform.position.y, transform.position.z);
@@ -22,6 +23,7 @@ public class Boid : MonoBehaviour
     public Vector3 alignmentForce;
     public Vector3 cohesionForce;
     public Vector3 flockCenter;
+    public GameObject target;
     
 
     private void Start()
@@ -44,6 +46,7 @@ public class Boid : MonoBehaviour
         this.flockCenter = new Vector3();
 
         transform.forward = direction;
+        isLeader = false;
     }
 
     /// <summary>
@@ -52,23 +55,23 @@ public class Boid : MonoBehaviour
     public void UpdateBoid()
     {
 
-        acceleration = new Vector3();
-
         CohesionRule();
         SeparationRule();
         AlignmentRule();
 
-        acceleration += cohesionForce;
-        acceleration += separationForce;
-        acceleration += alignmentForce;
-
-        direction += acceleration * Time.deltaTime;
-        speed = direction.magnitude;
-        direction /= speed;
+        Vector3 newDir = new Vector3();
+        newDir += cohesionForce;
+        newDir += separationForce;
+        newDir += alignmentForce;
+        direction = Vector3.RotateTowards(
+            direction, 
+            newDir, 
+            boidSettings.maxSteerForce * Time.deltaTime, 
+            0f
+        );
+        direction = direction.normalized;
         speed = Mathf.Clamp(speed, boidSettings.minSpeed, boidSettings.maxSpeed);
-        direction *= speed;
-
-        transform.Translate(direction * Time.deltaTime, Space.World);
+        transform.Translate(direction * speed * Time.deltaTime, Space.World);
         transform.forward = direction;
     }
 
@@ -76,7 +79,7 @@ public class Boid : MonoBehaviour
     /// Applies the cohesion rule to the boid
     /// </summary>
     private void CohesionRule() {
-        flockCenter /= numFlockmates;
+        flockCenter /= numFlockmates == 0 ? 1 : numFlockmates;
         Vector3 cohesionDir = (flockCenter - position).normalized;
         cohesionForce = cohesionDir / boidSettings.cohesionWeight;
     }
@@ -92,7 +95,20 @@ public class Boid : MonoBehaviour
     /// Applies the alignment rule to the boid
     /// </summary>
     private void AlignmentRule() {
-        alignmentForce /= boidSettings.alignmentWeight;
+        if (isLeader && target != null) {
+            Vector3 compassDir = target.transform.position - position;
+            alignmentForce += compassDir * 
+            Mathf.Max(
+                1, 
+                numFlockmates * boidSettings.leaderInfluence
+            );
+        }
+        int totalFlock = numFlockmates + (isLeader ? 1 : 0);
+        Vector3 normalizedAlignment = (
+            alignmentForce/
+            (totalFlock == 0 ? 1 : totalFlock)
+        ).normalized;
+        alignmentForce = normalizedAlignment / boidSettings.alignmentWeight;
     }
 
 }
