@@ -334,7 +334,6 @@ public class Simulation : MonoBehaviour
                     if (Physics.Raycast(globalPos + globalNormal, -globalNormal, out hit, obstacleMask)) {
                         surfaceNormal = hit.normal;
                         posIDM = hit.point;
-                        Debug.DrawLine(globalPos + globalNormal, hit.point, Color.red, 10000);
                     }
 
                     ghostBoid.transform.position = posIDM;

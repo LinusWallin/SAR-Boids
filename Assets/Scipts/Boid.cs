@@ -59,8 +59,6 @@ public class Boid : MonoBehaviour
         SeparationRule();
         AlignmentRule();
 
-        if (isLeader) {Debug.DrawLine(transform.position, transform.position + direction);}
-
         Vector3 newDir = new Vector3();
         newDir += cohesionForce;
         newDir += separationForce;
@@ -72,20 +70,7 @@ public class Boid : MonoBehaviour
             0f
         );
         direction = direction.normalized;
-
-        if (isLeader) {
-            Debug.DrawLine(transform.position, transform.position + cohesionForce, Color.red, 0.01f);
-            Debug.DrawLine(transform.position, transform.position + separationForce, Color.blue, 0.01f);
-            Debug.DrawLine(transform.position, transform.position + alignmentForce, Color.green, 0.01f);
-            
-            Debug.DrawLine(transform.position + new Vector3(1,1,1), target.transform.position, Color.yellow, 0.01f);
-            Debug.DrawLine(transform.position, transform.position + alignmentForce + separationForce + cohesionForce, Color.cyan, 0.01f);
-        }
-
-        if (isLeader) {Debug.Log("Direction after: " + direction);}
-        Debug.DrawLine(transform.position, transform.position + (direction * 4), Color.magenta, 0.01f);
         speed = Mathf.Clamp(speed, boidSettings.minSpeed, boidSettings.maxSpeed);
-
         transform.Translate(direction * speed * Time.deltaTime, Space.World);
         transform.forward = direction;
     }
@@ -123,9 +108,6 @@ public class Boid : MonoBehaviour
             alignmentForce/
             (totalFlock == 0 ? 1 : totalFlock)
         ).normalized;
-        if (isLeader) {
-            Debug.DrawLine(transform.position, transform.position + normalizedAlignment, Color.gray, 0.01f);
-        }
         alignmentForce = normalizedAlignment / boidSettings.alignmentWeight;
     }
 
