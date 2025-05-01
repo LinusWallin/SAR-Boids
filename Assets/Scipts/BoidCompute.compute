@@ -12,8 +12,15 @@ struct Boid {
     int isAlive;
 };
 
+struct Neighbor {
+    uint boidIdx;
+    float3 position;
+};
+
 RWStructuredBuffer<Boid> boids;
+AppendStructuredBuffer<Neighbor> neighbors;
 int numBoids;
+int maxNeighbors;
 float neighborMaxDist;
 float desiredDist;
 
@@ -30,6 +37,10 @@ void CSMain (uint3 id : SV_DispatchThreadID) {
                 //Checks for neighboring boids within a set radius of the current boid
                 if (sqrDist < neighborMaxDist * neighborMaxDist) {
                     currBoid.numFlockmates += 1;
+                    Neighbor n;
+                    n.boidIdx = indexBoid;
+                    n.position = boidI.position;
+                    neighbors.Append(n);
                     currBoid.flockDirection += boidI.direction;
                     currBoid.flockCenter += boidI.position;
 

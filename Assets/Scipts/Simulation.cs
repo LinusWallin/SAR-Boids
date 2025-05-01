@@ -10,6 +10,7 @@ using UnityEngine.UIElements;
 /// <author>Linus Wallin<author/>
 public class Simulation : MonoBehaviour 
 {
+    int maxExpectedNeighbors;
     const int threadGroupSize = 1024;
     public BoidSettings boidSettings;
     public GameObject boidPrefab;
@@ -72,6 +73,10 @@ public class Simulation : MonoBehaviour
         for (int k = 0; k < numIDMs; k++) {
             boids[boidSettings.numBoids + numGhosts + k] = arrayIDM[k];
         }
+
+        maxExpectedNeighbors = Mathf.CeilToInt(
+            Mathf.PI / (3 * Mathf.Sqrt(2)) * Mathf.Pow(boidSettings.neighborMaxDist, 2) * 2
+        );
 
     }
 
@@ -375,11 +380,22 @@ public class Simulation : MonoBehaviour
                 }
             }
 
+            int maxNeighbors = boidSettings.numBoids * maxExpectedNeighbors;
+
             var boidBuffer = new ComputeBuffer(boids.Length, BoidData.Size);
             boidBuffer.SetData(boidData);
 
+            var neighborBuffer = new ComputeBuffer(
+                maxNeighbors, 
+                NeighborData.Size, 
+                ComputeBufferType.Append
+            );
+            neighborBuffer.SetCounterValue(0);
+
             compute.SetBuffer(0, "boids", boidBuffer);
+            compute.SetBuffer(0, "neighbors", neighborBuffer);
             compute.SetInt("numBoids", boids.Length);
+            compute.SetInt("maxNeighbors", maxNeighbors);
             compute.SetFloat("neighborMaxDist", boidSettings.neighborMaxDist);
             compute.SetFloat("desiredDist", boidSettings.desiredDist);
 
@@ -387,6 +403,16 @@ public class Simulation : MonoBehaviour
             compute.Dispatch(0, threadGroups, 1, 1);
 
             boidBuffer.GetData(boidData);
+            
+            //count number of total neighbors
+            var countBuffer = new ComputeBuffer(1, sizeof(int), ComputeBufferType.Raw);
+            ComputeBuffer.CopyCount(neighborBuffer, countBuffer, 0);
+            int[] neighborCount = { 0 };
+            countBuffer.GetData(neighborCount);
+            int totalNeighbors = neighborCount[0];
+
+            var neighborData = new NeighborData[totalNeighbors];
+
 
             for (int i = 0; i < boids.Length; i++)
             {
@@ -400,6 +426,8 @@ public class Simulation : MonoBehaviour
             }
 
             boidBuffer.Release();
+            neighborBuffer.Release();
+            countBuffer.Release();
         }
     }
 
@@ -432,6 +460,17 @@ public class Simulation : MonoBehaviour
         public static int Size {
             get {
                 return sizeof (float) * 3 * 5 + sizeof (int) * 2;
+            }
+        }
+    }
+
+    public struct NeighborData {
+        public uint boidIdx;
+        public Vector3 position;
+
+        public static int Size {
+            get {
+                return sizeof (uint) + sizeof (float) * 3;
             }
         }
     }
