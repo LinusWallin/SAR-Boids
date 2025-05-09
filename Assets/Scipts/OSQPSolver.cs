@@ -4,6 +4,15 @@ using System.Runtime.InteropServices;
 
 public static class OSQPSolver
 {
+    /// <summary>
+    /// Calls the osqp_wrapper function which runs the C code and OSQP
+    /// </summary>
+    /// <param name="position">The position of the boid</param>
+    /// <param name="velocity">The velocity of the boid</param>
+    /// <param name="neighbors">The positions of neighbors of the boid</param>
+    /// <param name="numNeighbors">Number of neighbors for the boid</param>
+    /// <param name="DS">Minimum allowed distance</param>
+    /// <param name="C"></param>
     [DllImport("osqp_wrapper.dll")]
     private static extern void SolveCBF(
         [In] float[] position,
@@ -14,6 +23,14 @@ public static class OSQPSolver
         [In] float C
     );
 
+    /// <summary>
+    /// Takes input from the simulation and translates it to the correct format for the OSQP solver
+    /// </summary>
+    /// <param name="boid">The current boid</param>
+    /// <param name="neighbors">The neighbors of the boid</param>
+    /// <param name="DS">Minimum allowed distance</param>
+    /// <param name="C"></param>
+    /// <returns>Returns updated velocity from OSQP solution</returns>
     public Vector3 RunOSQPSolver(Boid boid, Vector3[] neighbors, float DS, float C) {
         float[] boidPos = {
             boid.position.x, 
