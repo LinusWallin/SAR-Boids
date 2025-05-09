@@ -9,37 +9,40 @@
 #define EXPORT_API
 #endif
 
-EXPORT_API void SolveCBF(OSQPFloat* position, OSQPFloat* velocity, OSQPFloat* neighbors, int num_neigh, OSQPFloat CBF_DS, OSQPFloat CBF_C) {
+EXPORT_API void SolveCBF(OSQPFloat* position, OSQPFloat* velocity, OSQPFloat* neighbors, OSQPInt num_neigh, OSQPFloat CBF_DS, OSQPFloat CBF_C) {
     // If the Boid has no neighbors skip CBF calculation
 	if (num_neigh == 0) {
 		return;
 	}
 	
-	OSQPInt n = 2;
+	OSQPInt n = 3; //dims
     OSQPInt m = num_neigh;
 	
-	OSQPFloat P_x[2] = {1.0, 1.0};
-	OSQPInt P_nnz  = 2;
-    OSQPInt P_r[2] = {0, 1};
-    OSQPInt P_c[3] = {0, 1, 2};
+	OSQPFloat P_x[3] = {1.0, 1.0, 1.0};
+	OSQPInt P_nnz = 3;
+    OSQPInt P_r[3] = {0, 1, 2};
+    OSQPInt P_c[4] = {0, 1, 2, 3};
     
-	OSQPFloat q[2]   = {-1 * velocity[0], -1 * velocity[1]};
-    OSQPFloat* A_x = (OSQPFloat*)malloc(sizeof(OSQPFloat) * m * 2);
-    OSQPInt A_nnz  = m * 2;
-    OSQPInt* A_r = (OSQPInt*)malloc(sizeof(OSQPInt) * m * 2);
-    OSQPInt A_c[3] = {0, m, m * 2};
+	OSQPFloat q[3] = {-1 * velocity[0], -1 * velocity[1], -1 * velocity[2]};
+    OSQPFloat* A_x = (OSQPFloat*)malloc(sizeof(OSQPFloat) * m * 3);
+    OSQPInt A_nnz = m * 3;
+    OSQPInt* A_r = (OSQPInt*)malloc(sizeof(OSQPInt) * m * 3);
+    OSQPInt A_c[4] = {0, m, m * 2, m * 3};
     OSQPFloat* l = (OSQPFloat*)malloc(sizeof(OSQPFloat) * m);
 	OSQPFloat* u = (OSQPFloat*)malloc(sizeof(OSQPFloat) * m);
 
 	for (OSQPInt i = 0; i < m; i++) {
         A_x[i] = (position[0] - neighbors[i * 3]);
         A_x[i + m] = (position[1] - neighbors[i * 3 + 1]);
+        A_x[i + 2 * m] = (position[2] - neighbors[i * 3 + 2]);
         A_r[i] = i;
         A_r[i + m] = i;
+        A_r[i + 2 * m] = i;
 
         OSQPFloat h = (
 			pow(position[0] - neighbors[i * 3], 2) + 
-			pow(position[1] - neighbors[i * 3 + 1], 2) - 
+			pow(position[1] - neighbors[i * 3 + 1], 2) +
+			pow(position[2] - neighbors[i * 3 + 2], 2) - 
 			(CBF_DS * CBF_DS)
 		);
 
@@ -70,6 +73,7 @@ EXPORT_API void SolveCBF(OSQPFloat* position, OSQPFloat* velocity, OSQPFloat* ne
 	
 	velocity[0] = solver->solution->x[0];
 	velocity[1] = solver->solution->x[1];
+	velocity[2] = solver->solution->x[2];
 
 	// free all osqp structures/memory
 	osqp_cleanup(solver);
