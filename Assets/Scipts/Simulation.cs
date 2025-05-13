@@ -413,6 +413,9 @@ public class Simulation : MonoBehaviour
 
             var neighborData = new NeighborData[totalNeighbors];
 
+            foreach (NeighborData n in neighborData) {
+                boids[n.boidIdx].neighborPos.Add(n.position);
+            }
 
             for (int i = 0; i < boids.Length; i++)
             {

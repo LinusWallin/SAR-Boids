@@ -31,7 +31,7 @@ public static class OSQPSolver
     /// <param name="DS">Minimum allowed distance</param>
     /// <param name="C"></param>
     /// <returns>Returns updated velocity from OSQP solution</returns>
-    public Vector3 RunOSQPSolver(Boid boid, Vector3[] neighbors, float DS, float C) {
+    public static Vector3 RunOSQPSolver(Boid boid, float DS, float C) {
         float[] boidPos = {
             boid.position.x, 
             boid.position.y, 
@@ -43,12 +43,13 @@ public static class OSQPSolver
             boid.direction.z
         };
 
-        int numNeighbors = neighbors.Length
+        int numNeighbors = boid.neighborPos.Count;
         float[] nPos = new float[numNeighbors*3];
         for (int i = 0; i < numNeighbors; i++) {
-            nPos[i * 3] = neighbors[i].x;
-            nPos[i * 3 + 1] = neighbors[i].y;
-            nPos[i * 3 + 2] = neighbors[i].z;
+            Vector3 n = boid.neighborPos[i];
+            nPos[i * 3] = n.x;
+            nPos[i * 3 + 1] = n.y;
+            nPos[i * 3 + 2] = n.z;
         }
 
         SolveCBF(boidPos, boidVelocity, nPos, numNeighbors, DS, C);
@@ -59,7 +60,7 @@ public static class OSQPSolver
             boidVelocity[2]
         );
 
-        return newVelocity;
+        return boid.direction;
     }
 
 }

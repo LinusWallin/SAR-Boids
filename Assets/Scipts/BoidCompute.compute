@@ -38,7 +38,7 @@ void CSMain (uint3 id : SV_DispatchThreadID) {
                 if (sqrDist < neighborMaxDist * neighborMaxDist) {
                     currBoid.numFlockmates += 1;
                     Neighbor n;
-                    n.boidIdx = indexBoid;
+                    n.boidIdx = id.x;
                     n.position = boidI.position;
                     neighbors.Append(n);
                     currBoid.flockDirection += boidI.direction;

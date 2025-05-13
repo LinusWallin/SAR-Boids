@@ -9,7 +9,7 @@
 #define EXPORT_API
 #endif
 
-EXPORT_API void SolveCBF(OSQPFloat* position, OSQPFloat* velocity, OSQPFloat* neighbors, OSQPInt num_neigh, OSQPFloat CBF_DS, OSQPFloat CBF_C) {
+EXPORT_API void SolveCBF(float* position, float* velocity, float* neighbors, int num_neigh, float CBF_DS, float CBF_C) {
     // If the Boid has no neighbors skip CBF calculation
 	if (num_neigh == 0) {
 		return;
@@ -77,6 +77,10 @@ EXPORT_API void SolveCBF(OSQPFloat* position, OSQPFloat* velocity, OSQPFloat* ne
 
 	// free all osqp structures/memory
 	osqp_cleanup(solver);
+	free(A_x);
+	free(A_r);
+	free(l);
+	free(u);
 	OSQPCscMatrix_free(P);
     OSQPCscMatrix_free(A);
 	OSQPSettings_free(settings);
