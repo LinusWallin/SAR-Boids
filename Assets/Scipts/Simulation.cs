@@ -413,7 +413,14 @@ public class Simulation : MonoBehaviour
 
             var neighborData = new NeighborData[totalNeighbors];
 
-            foreach (NeighborData n in neighborData) {
+            List<uint> reset = new List<uint>();
+            foreach (NeighborData n in neighborData)
+            {
+                if (!reset.Contains(n.boidIdx))
+                {
+                    boids[n.boidIdx].neighborPos.Clear();
+                    reset.Add(n.boidIdx);
+                }
                 boids[n.boidIdx].neighborPos.Add(n.position);
             }
 
