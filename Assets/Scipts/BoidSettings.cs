@@ -16,6 +16,7 @@ public class BoidSettings : ScriptableObject
     public int leaders;
     public float leaderInfluence;
     public float boidRadius;
+    public Vector3 startPosition;
     
     public float minSpeed;
     public float maxSpeed;

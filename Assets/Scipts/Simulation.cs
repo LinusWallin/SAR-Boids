@@ -86,9 +86,15 @@ public class Simulation : MonoBehaviour
         for (int i = 0; i < boidSettings.numBoids; i++) {
             GameObject b = Instantiate(boidPrefab, transform);
             b.transform.position = new Vector3(
-                boidSettings.boidRadius * (i % boidSettings.startCols), 
-                boidSettings.boidRadius * Mathf.Floor(i / boidSettings.startCols),
-                boidSettings.boidRadius * Mathf.Floor(i / (boidSettings.startCols * boidSettings.startRows))
+                boidSettings.startPosition.x +
+                boidSettings.boidRadius *
+                (i % boidSettings.startCols), 
+                boidSettings.startPosition.y +
+                boidSettings.boidRadius *
+                Mathf.Floor(i / boidSettings.startCols),
+                boidSettings.startPosition.z +
+                boidSettings.boidRadius *
+                Mathf.Floor(i / (boidSettings.startCols * boidSettings.startRows))
             );
             aliveBoids[i] = b.GetComponent<Boid>();
             Vector3 direction = new Vector3(
