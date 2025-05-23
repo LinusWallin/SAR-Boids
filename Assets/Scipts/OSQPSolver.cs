@@ -60,7 +60,7 @@ public static class OSQPSolver
             boidVelocity[2]
         );
 
-        return boid.direction;
+        return newVelocity;
     }
 
 }
