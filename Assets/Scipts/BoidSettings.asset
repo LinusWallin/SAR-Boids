@@ -16,10 +16,10 @@ MonoBehaviour:
   startCols: 5
   startRows: 2
   startDepth: 1
-  sepRatio: 2
+  sepRatio: 10
   leaders: 8
   leaderInfluence: 1
-  boidRadius: 3
+  boidRadius: 1
   startPosition: {x: -50, y: 0, z: 0}
   minSpeed: 2
   maxSpeed: 4

@@ -44,6 +44,7 @@ public static class OSQPSolver
         };
 
         int numNeighbors = boid.neighborPos.Count;
+        Debug.Log(numNeighbors);
         float[] nPos = new float[numNeighbors*3];
         for (int i = 0; i < numNeighbors; i++) {
             Vector3 n = boid.neighborPos[i];

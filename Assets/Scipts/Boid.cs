@@ -27,10 +27,12 @@ public class Boid : MonoBehaviour
     public Vector3 flockCenter;
     public GameObject target;
     
+    
+    public double osqpTime;
 
     private void Start()
     {
-        
+
     }
 
     /// <summary>
@@ -72,7 +74,11 @@ public class Boid : MonoBehaviour
             0f
         );
         direction = direction.normalized;
+        var sw = new System.Diagnostics.Stopwatch();
+        sw.Start();
         Vector3 osqpDirection = OSQPSolver.RunOSQPSolver(this, boidSettings.OSQP_DS, boidSettings.OSQP_C);
+        sw.Stop();
+        osqpTime = sw.Elapsed.TotalMilliseconds;//Debug.Log($"OSQP took: {sw.Elapsed.TotalMilliseconds}ms");
         direction = osqpDirection.normalized;
         speed = Mathf.Clamp(speed, boidSettings.minSpeed, boidSettings.maxSpeed);
         transform.Translate(direction * speed * Time.deltaTime, Space.World);
