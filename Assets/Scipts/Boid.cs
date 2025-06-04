@@ -78,8 +78,10 @@ public class Boid : MonoBehaviour
         sw.Start();
         Vector3 osqpDirection = OSQPSolver.RunOSQPSolver(this, boidSettings.OSQP_DS, boidSettings.OSQP_C);
         sw.Stop();
-        osqpTime = sw.Elapsed.TotalMilliseconds;//Debug.Log($"OSQP took: {sw.Elapsed.TotalMilliseconds}ms");
-        direction = osqpDirection.normalized;
+        osqpTime = sw.Elapsed.TotalMilliseconds;
+        if (osqpDirection.magnitude < 1000) {
+            direction = osqpDirection.normalized;
+        }
         speed = Mathf.Clamp(speed, boidSettings.minSpeed, boidSettings.maxSpeed);
         transform.Translate(direction * speed * Time.deltaTime, Space.World);
         transform.forward = direction;

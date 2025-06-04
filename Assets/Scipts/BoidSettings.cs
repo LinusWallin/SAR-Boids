@@ -17,18 +17,19 @@ public class BoidSettings : ScriptableObject
     public float leaderInfluence;
     public float boidRadius;
     public Vector3 startPosition;
-    
+
     public float minSpeed;
     public float maxSpeed;
     public float maxSteerForce;
-    
+
     public float separationWeight;
     public float alignmentWeight;
     public float cohesionWeight;
     public float OSQP_DS;
     public float OSQP_C;
-    
+
     public float neighborMaxDist;
     public float desiredDist;
+    public float startDist;
 
 }

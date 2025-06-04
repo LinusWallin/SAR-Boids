@@ -11,6 +11,7 @@ using UnityEngine.UIElements;
 public class Simulation : MonoBehaviour 
 {
     int maxNeighbors;
+    int totalMaxNeighbors;
     const int threadGroupSize = 1024;
     public BoidSettings boidSettings;
     public GameObject boidPrefab;
@@ -60,7 +61,8 @@ public class Simulation : MonoBehaviour
         Boid[] arrayIDM = boidIDMs.ToArray();
         int numIDMs = arrayIDM.Length;
 
-        maxNeighbors = (boidSettings.numBoids - 1 + numGhosts + numIDMs / 2) * boidSettings.numBoids;
+        maxNeighbors = (boidSettings.numBoids - 1 + numGhosts + numIDMs / 2);
+        totalMaxNeighbors = maxNeighbors * boidSettings.numBoids;
         boids = new Boid[boidSettings.numBoids + numGhosts + numIDMs];
 
         Debug.Log("Boids in scene" + boidSettings.numBoids * (boidSettings.numBoids + numGhosts + numIDMs));
@@ -87,13 +89,13 @@ public class Simulation : MonoBehaviour
             GameObject b = Instantiate(boidPrefab, transform);
             b.transform.position = new Vector3(
                 boidSettings.startPosition.x +
-                boidSettings.boidRadius *
+                boidSettings.startDist *
                 (i % boidSettings.startCols), 
                 boidSettings.startPosition.y +
-                boidSettings.boidRadius *
+                boidSettings.startDist *
                 Mathf.Floor(i / boidSettings.startCols),
                 boidSettings.startPosition.z +
-                boidSettings.boidRadius *
+                boidSettings.startDist *
                 Mathf.Floor(i / (boidSettings.startCols * boidSettings.startRows))
             );
             aliveBoids[i] = b.GetComponent<Boid>();
@@ -379,9 +381,12 @@ public class Simulation : MonoBehaviour
                 if (boids[i] != null) {
                     boidData[i].position = boids[i].position;
                     boidData[i].direction = boids[i].direction;
-                    if (boids[i].isAlive) {
+                    if (boids[i].isAlive)
+                    {
                         boidData[i].isAlive = 1;
-                    } else {
+                    }
+                    else
+                    {
                         boidData[i].isAlive = 0;
                     }
                 }
@@ -390,12 +395,12 @@ public class Simulation : MonoBehaviour
             var boidBuffer = new ComputeBuffer(boids.Length, BoidData.Size);
             boidBuffer.SetData(boidData);
 
+            var neighborData = new NeighborData[totalMaxNeighbors];
             var neighborBuffer = new ComputeBuffer(
-                maxNeighbors, 
-                NeighborData.Size, 
-                ComputeBufferType.Append
+                totalMaxNeighbors, 
+                NeighborData.Size
             );
-            neighborBuffer.SetCounterValue(0);
+            neighborBuffer.SetData(neighborData);
 
             compute.SetBuffer(0, "boids", boidBuffer);
             compute.SetBuffer(0, "neighbors", neighborBuffer);
@@ -408,29 +413,7 @@ public class Simulation : MonoBehaviour
             compute.Dispatch(0, threadGroups, 1, 1);
 
             boidBuffer.GetData(boidData);
-            
-            //count number of total neighbors
-            var countBuffer = new ComputeBuffer(1, sizeof(int), ComputeBufferType.Raw);
-            ComputeBuffer.CopyCount(neighborBuffer, countBuffer, 0);
-            int[] neighborCount = { 0 };
-            countBuffer.GetData(neighborCount);
-            int totalNeighbors = neighborCount[0];
-            if (totalNeighbors > maxNeighbors) Debug.Log(totalNeighbors + " " + maxNeighbors);
-
-            var neighborData = new NeighborData[totalNeighbors];
-            neighborBuffer.GetData(neighborData, 0, 0, totalNeighbors);
-
-            List<uint> reset = new List<uint>();
-            foreach (NeighborData n in neighborData)
-            {
-                if (!reset.Contains(n.boidIdx))
-                {
-                    boids[n.boidIdx].neighborPos.Clear();
-                    reset.Add(n.boidIdx);
-                }
-                boids[n.boidIdx].neighborPos.Add(n.position);
-                if (n.position == new Vector3(0, 0, 0)) Debug.Log("BRUUH");
-            }
+            neighborBuffer.GetData(neighborData);
 
             for (int i = 0; i < boids.Length; i++)
             {
@@ -440,6 +423,14 @@ public class Simulation : MonoBehaviour
                     boids[i].numFlockmates = boidData[i].numFlockmates;
                     boids[i].alignmentForce = boidData[i].flockDirection;
                     boids[i].separationForce = boidData[i].separationDirection.normalized;
+                    boids[i].neighborPos.Clear();
+                    
+                    int startIdx = i * maxNeighbors;
+                    for (int j = 0; j < boids[i].numFlockmates; j++)
+                    {
+                        boids[i].neighborPos.Add(neighborData[startIdx + j].position);
+                    }
+
                     boids[i].UpdateBoid();
                     timeMs += boids[i].osqpTime;
                 }
@@ -448,7 +439,6 @@ public class Simulation : MonoBehaviour
 
             boidBuffer.Release();
             neighborBuffer.Release();
-            countBuffer.Release();
         }
     }
 
