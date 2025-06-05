@@ -16,15 +16,19 @@ MonoBehaviour:
   startCols: 5
   startRows: 2
   startDepth: 1
-  sepRatio: 2
+  sepRatio: 5
   leaders: 8
   leaderInfluence: 1
-  boidRadius: 3
+  boidRadius: 1
+  startPosition: {x: -50, y: 0, z: 0}
   minSpeed: 2
-  maxSpeed: 4
+  maxSpeed: 3
   maxSteerForce: 1
   separationWeight: 4
   alignmentWeight: 10
   cohesionWeight: 75
+  OSQP_DS: 25
+  OSQP_C: 0.1
   neighborMaxDist: 50
   desiredDist: 25
+  startDist: 10

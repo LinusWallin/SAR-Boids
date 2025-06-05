@@ -10,6 +10,8 @@ using UnityEngine.UIElements;
 /// <author>Linus Wallin<author/>
 public class Simulation : MonoBehaviour 
 {
+    int maxNeighbors;
+    int totalMaxNeighbors;
     const int threadGroupSize = 1024;
     public BoidSettings boidSettings;
     public GameObject boidPrefab;
@@ -59,9 +61,14 @@ public class Simulation : MonoBehaviour
         Boid[] arrayIDM = boidIDMs.ToArray();
         int numIDMs = arrayIDM.Length;
 
+        maxNeighbors = (boidSettings.numBoids - 1 + numGhosts + numIDMs / 2);
+        totalMaxNeighbors = maxNeighbors * boidSettings.numBoids;
         boids = new Boid[boidSettings.numBoids + numGhosts + numIDMs];
+
+        Debug.Log("Boids in scene" + boidSettings.numBoids * (boidSettings.numBoids + numGhosts + numIDMs));
         
-        for (int i = 0; i < boidSettings.numBoids; i++) {
+        for (int i = 0; i < boidSettings.numBoids; i++)
+        {
             boids[i] = aliveBoids[i];
         }
 
@@ -81,9 +88,15 @@ public class Simulation : MonoBehaviour
         for (int i = 0; i < boidSettings.numBoids; i++) {
             GameObject b = Instantiate(boidPrefab, transform);
             b.transform.position = new Vector3(
-                boidSettings.boidRadius * (i % boidSettings.startCols), 
-                boidSettings.boidRadius * Mathf.Floor(i / boidSettings.startCols),
-                boidSettings.boidRadius * Mathf.Floor(i / (boidSettings.startCols * boidSettings.startRows))
+                boidSettings.startPosition.x +
+                boidSettings.startDist *
+                (i % boidSettings.startCols), 
+                boidSettings.startPosition.y +
+                boidSettings.startDist *
+                Mathf.Floor(i / boidSettings.startCols),
+                boidSettings.startPosition.z +
+                boidSettings.startDist *
+                Mathf.Floor(i / (boidSettings.startCols * boidSettings.startRows))
             );
             aliveBoids[i] = b.GetComponent<Boid>();
             Vector3 direction = new Vector3(
@@ -361,15 +374,19 @@ public class Simulation : MonoBehaviour
     void Update()
     {
         if (boids != null) {
+            double timeMs = 0.0;
             var boidData = new BoidData[boids.Length];
 
             for (int i = 0; i < boids.Length; i++) {
                 if (boids[i] != null) {
                     boidData[i].position = boids[i].position;
                     boidData[i].direction = boids[i].direction;
-                    if (boids[i].isAlive) {
+                    if (boids[i].isAlive)
+                    {
                         boidData[i].isAlive = 1;
-                    } else {
+                    }
+                    else
+                    {
                         boidData[i].isAlive = 0;
                     }
                 }
@@ -378,8 +395,17 @@ public class Simulation : MonoBehaviour
             var boidBuffer = new ComputeBuffer(boids.Length, BoidData.Size);
             boidBuffer.SetData(boidData);
 
+            var neighborData = new NeighborData[totalMaxNeighbors];
+            var neighborBuffer = new ComputeBuffer(
+                totalMaxNeighbors, 
+                NeighborData.Size
+            );
+            neighborBuffer.SetData(neighborData);
+
             compute.SetBuffer(0, "boids", boidBuffer);
+            compute.SetBuffer(0, "neighbors", neighborBuffer);
             compute.SetInt("numBoids", boids.Length);
+            compute.SetInt("maxNeighbors", maxNeighbors);
             compute.SetFloat("neighborMaxDist", boidSettings.neighborMaxDist);
             compute.SetFloat("desiredDist", boidSettings.desiredDist);
 
@@ -387,19 +413,32 @@ public class Simulation : MonoBehaviour
             compute.Dispatch(0, threadGroups, 1, 1);
 
             boidBuffer.GetData(boidData);
+            neighborBuffer.GetData(neighborData);
 
             for (int i = 0; i < boids.Length; i++)
             {
-                if (boids[i] != null && boids[i].isAlive) {
+                if (boids[i] != null && boids[i].isAlive)
+                {
                     boids[i].flockCenter = boidData[i].flockCenter;
                     boids[i].numFlockmates = boidData[i].numFlockmates;
                     boids[i].alignmentForce = boidData[i].flockDirection;
                     boids[i].separationForce = boidData[i].separationDirection.normalized;
+                    boids[i].neighborPos.Clear();
+                    
+                    int startIdx = i * maxNeighbors;
+                    for (int j = 0; j < boids[i].numFlockmates; j++)
+                    {
+                        boids[i].neighborPos.Add(neighborData[startIdx + j].position);
+                    }
+
                     boids[i].UpdateBoid();
+                    timeMs += boids[i].osqpTime;
                 }
             }
+            Debug.Log($"OSQP took: {timeMs}ms");
 
             boidBuffer.Release();
+            neighborBuffer.Release();
         }
     }
 
@@ -432,6 +471,17 @@ public class Simulation : MonoBehaviour
         public static int Size {
             get {
                 return sizeof (float) * 3 * 5 + sizeof (int) * 2;
+            }
+        }
+    }
+
+    public struct NeighborData {
+        public uint boidIdx;
+        public Vector3 position;
+
+        public static int Size {
+            get {
+                return sizeof (uint) + sizeof (float) * 3;
             }
         }
     }
