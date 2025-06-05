@@ -26,5 +26,7 @@ MonoBehaviour:
   separationWeight: 4
   alignmentWeight: 10
   cohesionWeight: 75
+  OSQP_DS: 25
+  OSQP_C: 0.1
   neighborMaxDist: 50
   desiredDist: 25
