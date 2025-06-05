@@ -24,8 +24,6 @@ public class BoidSettings : ScriptableObject
     public float separationWeight;
     public float alignmentWeight;
     public float cohesionWeight;
-    public float OSQP_DS;
-    public float OSQP_C;
     
     public float neighborMaxDist;
     public float desiredDist;
