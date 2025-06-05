@@ -1,6 +1,5 @@
 using System;
 using UnityEngine;
-using System.Collections.Generic;
 
 /// <summary>
 /// Keeps track of and updates the position and velocity of the boid
@@ -14,7 +13,6 @@ public class Boid : MonoBehaviour
     public bool isLeader;
     public float speed;
     public int numFlockmates;
-    public List<Vector3> neighborPos;
     public Vector3 direction;
     public Vector3 position{
         get {
@@ -72,8 +70,6 @@ public class Boid : MonoBehaviour
             0f
         );
         direction = direction.normalized;
-        Vector3 osqpDirection = OSQPSolver.RunOSQPSolver(this, boidSettings.OSQP_DS, boidSettings.OSQP_C);
-        direction = osqpDirection.normalized;
         speed = Mathf.Clamp(speed, boidSettings.minSpeed, boidSettings.maxSpeed);
         transform.Translate(direction * speed * Time.deltaTime, Space.World);
         transform.forward = direction;
