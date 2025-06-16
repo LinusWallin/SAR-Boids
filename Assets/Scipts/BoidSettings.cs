@@ -32,4 +32,5 @@ public class BoidSettings : ScriptableObject
     public float desiredDist;
     public float startDist;
 
+    public float cellRadius;
 }

@@ -32,3 +32,4 @@ MonoBehaviour:
   neighborMaxDist: 50
   desiredDist: 25
   startDist: 10
+  cellRadius: 50
