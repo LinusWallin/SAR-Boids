@@ -10,6 +10,7 @@ struct Boid {
     float3 separationDirection;
     int numFlockmates;
     int isAlive;
+    int gIndex;
 };
 
 struct Neighbor {
@@ -75,6 +76,7 @@ void CSMain (uint3 id : SV_DispatchThreadID) {
                 floor((currBoid.position.z - gridStart.z)/cellSize.z)
             );
             uint gridIndex = boidGridIdx.x + boidGridIdx.y * gridSize.x + boidGridIdx.z * gridSize.x * gridSize.y;
+            currBoid.gIndex = gridIndex;
             currBoid.flockDirection = potentialField[gridIndex];
         }
     }

@@ -36,6 +36,6 @@ MonoBehaviour:
   isCBF: 0
   cellRadius: 0.5
   gridSize: {x: 250, y: 80, z: 250}
-  obstacleInfluence: 10
-  kAtt: 100
-  kRep: 1
+  obstacleInfluence: 1000
+  kAtt: 1
+  kRep: 100

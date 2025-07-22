@@ -121,7 +121,7 @@ public class Boid : MonoBehaviour
         }
         if (alignmentForce != new Vector3(0, 0, 0))
         {
-            Debug.DrawLine(position, alignmentForce, Color.green);
+            Debug.DrawLine(position, position + alignmentForce, Color.green);
         }
         int totalFlock = numFlockmates + (isLeader ? 1 : 0);
         Vector3 normalizedAlignment = (
@@ -129,7 +129,6 @@ public class Boid : MonoBehaviour
             (totalFlock == 0 ? 1 : totalFlock)
         ).normalized;
         alignmentForce = normalizedAlignment / boidSettings.alignmentWeight;
-        if (alignmentForce != new Vector3(0, 0, 0)) Debug.DrawLine(position, position + alignmentForce, Color.blue);
     }
 
 }
