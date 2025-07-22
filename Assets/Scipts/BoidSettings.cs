@@ -32,5 +32,11 @@ public class BoidSettings : ScriptableObject
     public float desiredDist;
     public float startDist;
 
+    public bool potentialField;
+    public bool isCBF;
     public float cellRadius;
+    public Vector3 gridSize;
+    public float obstacleInfluence;
+    public float kAtt;
+    public float kRep;
 }

@@ -32,4 +32,10 @@ MonoBehaviour:
   neighborMaxDist: 50
   desiredDist: 25
   startDist: 10
-  cellRadius: 50
+  potentialField: 1
+  isCBF: 0
+  cellRadius: 0.5
+  gridSize: {x: 250, y: 80, z: 250}
+  obstacleInfluence: 10
+  kAtt: 100
+  kRep: 1

@@ -18,14 +18,54 @@ public class Simulation : MonoBehaviour
     public GameObject[] obstacles;
     public Transform boundingBox;
     public ComputeShader compute;
+    public ComputeShader potentialCompute;
     [SerializeField] private GameObject target;
     [SerializeField] private LayerMask obstacleMask;
+    ProbabilityDist probDist;
+    Vector3[] potentialField;
     Boid[] boids;
     Boid[] aliveBoids;
     Boid[] boidCMs;
+    Vector3 gridStart;
+    Vector3 cellSize;
 
     void Start()
     {
+        gridStart = GetGridStart();
+        probDist = gameObject.AddComponent<ProbabilityDist>();
+        probDist.Init(
+            obstacleMask,
+            gridStart,
+            boidSettings.gridSize,
+            new Vector3(
+                boidSettings.cellRadius * 2,
+                boidSettings.cellRadius * 2,
+                boidSettings.cellRadius * 2
+            ),
+            target.transform.position,
+            potentialCompute,
+            boidSettings
+        );
+        potentialField = probDist.GetProbGrid();
+        /*foreach (Vector3 v in potentialField)
+        {
+            if (v != new Vector3(0, 0, 0))
+            {
+                Debug.Log(v + " pot");
+            }
+        }*/
+
+        cellSize = new Vector3(
+                boidSettings.cellRadius * 2,
+                boidSettings.cellRadius * 2,
+                boidSettings.cellRadius * 2
+            );
+        int x = (int)(100 % boidSettings.gridSize.x);
+        int y = (int)((100 / boidSettings.gridSize.x) % boidSettings.gridSize.y);
+        int z = (int)(100 / (boidSettings.gridSize.x * boidSettings.gridSize.y));
+        Vector3 pos = gridStart + Vector3.Scale(new Vector3(x, y, z), cellSize);
+        Debug.DrawLine(pos, pos + potentialField[100], Color.red, 100f);
+
         SpawnBoids();
 
         List<Boid[]> boidList = new List<Boid[]>();
@@ -64,8 +104,6 @@ public class Simulation : MonoBehaviour
         maxNeighbors = (boidSettings.numBoids - 1 + numGhosts + numIDMs / 2);
         totalMaxNeighbors = maxNeighbors * boidSettings.numBoids;
         boids = new Boid[boidSettings.numBoids + numGhosts + numIDMs];
-
-        Debug.Log("Boids in scene" + boidSettings.numBoids * (boidSettings.numBoids + numGhosts + numIDMs));
         
         for (int i = 0; i < boidSettings.numBoids; i++)
         {
@@ -80,6 +118,22 @@ public class Simulation : MonoBehaviour
             boids[boidSettings.numBoids + numGhosts + k] = arrayIDM[k];
         }
 
+    }
+
+    /// <summary>
+    /// Calculates the start position of the potential field
+    /// </summary>
+    /// <returns>Grid start position</returns>
+    Vector3 GetGridStart()
+    {
+        return new Vector3 (
+            GameObject.Find("RightPlane").transform.position.x
+            + boidSettings.cellRadius,
+            GameObject.Find("BottomPlane").transform.position.y
+            + boidSettings.cellRadius,
+            GameObject.Find("BackPlane").transform.position.z
+            + boidSettings.cellRadius
+        );
     }
 
     void SpawnBoids ()
@@ -371,6 +425,39 @@ public class Simulation : MonoBehaviour
         return boidIDMs;
     }
 
+    /// <summary>
+    /// Debugging function that draws the lines of the potential field
+    /// </summary>
+    void OnDrawGizmos()
+    {
+        if (potentialField == null) return;
+        if (potentialField.Length == 0) return;
+
+        for (int i = 0; i < boidSettings.gridSize.x; i++)
+        {
+            for (int j = 0; j < boidSettings.gridSize.y; j++)
+            {
+                for (int k = 0; k < boidSettings.gridSize.z; k++)
+                {
+                    if (i % 5 == 0 && j % 5 == 0 && k % 5 == 0)
+                    {
+                        int index = i + j * (int)boidSettings.gridSize.x + k * (int)(boidSettings.gridSize.x * boidSettings.gridSize.y);
+                        Vector3 pos = gridStart + new Vector3(i, j, k) * boidSettings.cellRadius * 2;
+                        Vector3 force = potentialField[index];
+
+                        if (!float.IsNaN(force.x) && force != Vector3.zero)
+                        {
+                            Gizmos.color = Color.blue;
+                            Gizmos.DrawLine(pos, pos + force.normalized * 0.2f);
+                            Gizmos.color = Color.Lerp(Color.green, Color.red, force.magnitude / 10000f);
+                            Gizmos.DrawLine(pos + force.normalized * 0.2f, pos + force.normalized);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     void Update()
     {
         if (boids != null) {
@@ -402,12 +489,29 @@ public class Simulation : MonoBehaviour
             );
             neighborBuffer.SetData(neighborData);
 
+            var fieldBuffer = new ComputeBuffer(potentialField.Length, sizeof(float) * 3);
+            fieldBuffer.SetData(potentialField);
+
             compute.SetBuffer(0, "boids", boidBuffer);
             compute.SetBuffer(0, "neighbors", neighborBuffer);
+            compute.SetBuffer(0, "potentialField", fieldBuffer);
             compute.SetInt("numBoids", boids.Length);
             compute.SetInt("maxNeighbors", maxNeighbors);
             compute.SetFloat("neighborMaxDist", boidSettings.neighborMaxDist);
             compute.SetFloat("desiredDist", boidSettings.desiredDist);
+            compute.SetInt("isField", boidSettings.potentialField ? 1 : 0);
+            compute.SetInts(
+                "gridSize",
+                (int)boidSettings.gridSize.x,
+                (int)boidSettings.gridSize.y,
+                (int)boidSettings.gridSize.z
+            );
+            compute.SetFloats(
+                "cellSize",
+                boidSettings.cellRadius * 2,
+                boidSettings.cellRadius * 2,
+                boidSettings.cellRadius * 2
+            ); 
 
             int threadGroups = Mathf.CeilToInt(boidSettings.numBoids / (float) threadGroupSize);
             compute.Dispatch(0, threadGroups, 1, 1);
@@ -422,6 +526,17 @@ public class Simulation : MonoBehaviour
                     boids[i].flockCenter = boidData[i].flockCenter;
                     boids[i].numFlockmates = boidData[i].numFlockmates;
                     boids[i].alignmentForce = boidData[i].flockDirection;
+                    Debug.Log("alignment: " + boids[i].alignmentForce);
+                    Vector3 p = boids[i].position;
+                    Vector3 pp = new Vector3(
+                            Mathf.Floor((p.x - gridStart.x) / cellSize.x),
+                            Mathf.Floor((p.y - gridStart.y) / cellSize.y),
+                            Mathf.Floor((p.z - gridStart.z) / cellSize.z)
+                        );
+                    int coordinateIdx = (int)pp.x + (int)pp.y * (int)boidSettings.gridSize.x + (int)pp.z * (int)boidSettings.gridSize.x * (int)boidSettings.gridSize.y;
+                    Vector3 f = potentialField[coordinateIdx];
+                    Debug.Log("ACTUAL FORCE: " + f);
+                    Debug.DrawLine(boids[i].position, boids[i].position + f, Color.yellow);
                     boids[i].separationForce = boidData[i].separationDirection.normalized;
                     boids[i].neighborPos.Clear();
                     

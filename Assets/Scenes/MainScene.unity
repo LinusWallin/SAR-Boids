@@ -633,6 +633,7 @@ MonoBehaviour:
   - {fileID: 911735126}
   boundingBox: {fileID: 2050511647}
   compute: {fileID: 7200000, guid: 573047abd76a1ec498776d07e286132e, type: 3}
+  potentialCompute: {fileID: 7200000, guid: b57e5601b0758064b81d1b5058860a9f, type: 3}
   target: {fileID: 79858125}
   obstacleMask:
     serializedVersion: 2
