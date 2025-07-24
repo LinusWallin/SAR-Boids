@@ -11,6 +11,7 @@ public class Boid : MonoBehaviour
     BoidSettings boidSettings;
 
     public bool isAlive;
+    public bool isGoal;
     public bool isLeader;
     public float speed;
     public int numFlockmates;
@@ -46,6 +47,7 @@ public class Boid : MonoBehaviour
         this.direction = direction;
         this.speed = speed;
         this.isAlive = lifeStatus;
+        this.isGoal = false;
         this.numFlockmates = 0;
         this.flockCenter = new Vector3();
 

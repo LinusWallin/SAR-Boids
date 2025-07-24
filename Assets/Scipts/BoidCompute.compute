@@ -10,7 +10,7 @@ struct Boid {
     float3 separationDirection;
     int numFlockmates;
     int isAlive;
-    int gIndex;
+    int goalReached;
 };
 
 struct Neighbor {
@@ -26,11 +26,13 @@ int numBoids;
 int maxNeighbors;
 float neighborMaxDist;
 float desiredDist;
+float goalRadius;
 
 int isField;
 int3 gridSize;
 float3 cellSize;
 float3 gridStart;
+float3 targetPos;
 
 uint CoordinateToIndex(int3 pos) {
     uint coordinateIdx = pos.x + pos.y * gridSize.x + pos.z * gridSize.x * gridSize.y;
@@ -41,43 +43,48 @@ uint CoordinateToIndex(int3 pos) {
 void CSMain (uint3 id : SV_DispatchThreadID) {
     Boid currBoid = boids[id.x];
     currBoid.numFlockmates = 0;
-    if (currBoid.isAlive == 1){
-        int startIdx = id.x * maxNeighbors;
-        for (uint indexBoid = 0; indexBoid < numBoids; indexBoid++) {
-            if (id.x != indexBoid) {
-                Boid boidI = boids[indexBoid];
-                if (all(boidI.position != float3(0,0,0))){
-                    float3 offset = boidI.position - currBoid.position;
-                    float sqrDist = offset.x * offset.x + offset.y * offset.y + offset.z * offset.z;
+    if (currBoid.isAlive == 1 && currBoid.goalReached == 0){
+        if (length(targetPos - currBoid.position) < goalRadius) {
+            currBoid.isAlive = 0;
+            currBoid.goalReached = 1;
+        }
+        else {
+            int startIdx = id.x * maxNeighbors;
+            for (uint indexBoid = 0; indexBoid < numBoids; indexBoid++) {
+                if (id.x != indexBoid) {
+                    Boid boidI = boids[indexBoid];
+                    if (all(boidI.position != float3(0,0,0))){
+                        float3 offset = boidI.position - currBoid.position;
+                        float sqrDist = offset.x * offset.x + offset.y * offset.y + offset.z * offset.z;
 
-                    //Checks for neighboring boids within a set radius of the current boid
-                    if (sqrDist < neighborMaxDist * neighborMaxDist) {
-                        Neighbor n;
-                        n.boidIdx = id.x;
-                        n.position = boidI.position;
-                        neighbors[startIdx + currBoid.numFlockmates] = n;
-                        currBoid.numFlockmates += 1;
-                        currBoid.flockDirection += boidI.direction;
-                        currBoid.flockCenter += boidI.position;
+                        //Checks for neighboring boids within a set radius of the current boid
+                        if (sqrDist < neighborMaxDist * neighborMaxDist) {
+                            Neighbor n;
+                            n.boidIdx = id.x;
+                            n.position = boidI.position;
+                            neighbors[startIdx + currBoid.numFlockmates] = n;
+                            currBoid.numFlockmates += 1;
+                            currBoid.flockDirection += boidI.direction;
+                            currBoid.flockCenter += boidI.position;
 
-                        if (sqrDist < desiredDist * desiredDist) {
-                            currBoid.separationDirection -= offset;
+                            if (sqrDist < desiredDist * desiredDist) {
+                                currBoid.separationDirection -= offset;
+                            }
                         }
                     }
                 }
             }
-        }
-        if (isField == 1) {
-            //int3 boidGridIdx = int3(floor((currBoid.position - gridStart) / cellSize));
-            //uint gridIndex = CoordinateToIndex(boidGridIdx);
-            int3 boidGridIdx = int3(
-                floor((currBoid.position.x - gridStart.x)/cellSize.x),
-                floor((currBoid.position.y - gridStart.y)/cellSize.y),
-                floor((currBoid.position.z - gridStart.z)/cellSize.z)
-            );
-            uint gridIndex = boidGridIdx.x + boidGridIdx.y * gridSize.x + boidGridIdx.z * gridSize.x * gridSize.y;
-            currBoid.gIndex = gridIndex;
-            currBoid.flockDirection = potentialField[gridIndex];
+            if (isField == 1) {
+                //int3 boidGridIdx = int3(floor((currBoid.position - gridStart) / cellSize));
+                //uint gridIndex = CoordinateToIndex(boidGridIdx);
+                int3 boidGridIdx = int3(
+                    floor((currBoid.position.x - gridStart.x)/cellSize.x),
+                    floor((currBoid.position.y - gridStart.y)/cellSize.y),
+                    floor((currBoid.position.z - gridStart.z)/cellSize.z)
+                );
+                uint gridIndex = boidGridIdx.x + boidGridIdx.y * gridSize.x + boidGridIdx.z * gridSize.x * gridSize.y;
+                currBoid.flockDirection = potentialField[gridIndex];
+            }
         }
     }
     boids[id.x] = currBoid;

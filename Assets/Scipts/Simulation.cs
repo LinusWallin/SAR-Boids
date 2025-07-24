@@ -508,6 +508,14 @@ public class Simulation : MonoBehaviour
                     {
                         boidData[i].isAlive = 0;
                     }
+                    if (boids[i].isGoal)
+                    {
+                        boidData[i].goalReached = 1;
+                    }
+                    else
+                    {
+                        boidData[i].goalReached = 0;
+                    }
                 }
             }
 
@@ -524,6 +532,7 @@ public class Simulation : MonoBehaviour
             var fieldBuffer = new ComputeBuffer(potentialField.Length, sizeof(float) * 3);
             fieldBuffer.SetData(potentialField);
 
+            //Set compute shader variables
             compute.SetBuffer(0, "boids", boidBuffer);
             compute.SetBuffer(0, "neighbors", neighborBuffer);
             compute.SetBuffer(0, "potentialField", fieldBuffer);
@@ -531,6 +540,7 @@ public class Simulation : MonoBehaviour
             compute.SetInt("maxNeighbors", maxNeighbors);
             compute.SetFloat("neighborMaxDist", boidSettings.neighborMaxDist);
             compute.SetFloat("desiredDist", boidSettings.desiredDist);
+            compute.SetFloat("goalRadius", boidSettings.goalRadius);
             compute.SetInt("isField", boidSettings.potentialField ? 1 : 0);
             compute.SetInts(
                 "gridSize",
@@ -550,6 +560,12 @@ public class Simulation : MonoBehaviour
                 gridStart.y,
                 gridStart.z
             );
+            compute.SetFloats(
+                "targetPos",
+                target.transform.position.x,
+                target.transform.position.y,
+                target.transform.position.z
+            );
 
             int threadGroups = Mathf.CeilToInt(boidSettings.numBoids / (float)threadGroupSize);
             compute.Dispatch(0, threadGroups, 1, 1);
@@ -561,33 +577,28 @@ public class Simulation : MonoBehaviour
             {
                 if (boids[i] != null && boids[i].isAlive)
                 {
-                    boids[i].flockCenter = boidData[i].flockCenter;
-                    boids[i].numFlockmates = boidData[i].numFlockmates;
-                    boids[i].alignmentForce = boidData[i].flockDirection;
-                    /*Debug.Log("alignment: " + boids[i].alignmentForce);
-                    Vector3 p = boids[i].position;
-                    Vector3 pp = new Vector3(
-                            Mathf.Floor((p.x - gridStart.x) / cellSize.x),
-                            Mathf.Floor((p.y - gridStart.y) / cellSize.y),
-                            Mathf.Floor((p.z - gridStart.z) / cellSize.z)
-                        );
-                    int coordinateIdx = (int)pp.x + (int)pp.y * (int)boidSettings.gridSize.x + (int)pp.z * (int)boidSettings.gridSize.x * (int)boidSettings.gridSize.y;
-                    Vector3 f = potentialField[coordinateIdx];
-                    Debug.Log("ACTUAL FORCE: " + f);
-                    Debug.Log("real: " + boidData[i].gIndex + " ; " + " pot: " + coordinateIdx);
-                    Debug.Log(boidData[i].position + " ; " + boids[i].position);
-                    Debug.DrawLine(boids[i].position, boids[i].position + f, Color.yellow);*/
-                    boids[i].separationForce = boidData[i].separationDirection.normalized;
-                    boids[i].neighborPos.Clear();
-
-                    int startIdx = i * maxNeighbors;
-                    for (int j = 0; j < boids[i].numFlockmates; j++)
+                    if (boidData[i].goalReached == 1)
                     {
-                        boids[i].neighborPos.Add(neighborData[startIdx + j].position);
+                        boids[i].isGoal = true;
+                        boids[i].speed = 0;
                     }
+                    else
+                    {
+                        boids[i].flockCenter = boidData[i].flockCenter;
+                        boids[i].numFlockmates = boidData[i].numFlockmates;
+                        boids[i].alignmentForce = boidData[i].flockDirection;
+                        boids[i].separationForce = boidData[i].separationDirection.normalized;
+                        boids[i].neighborPos.Clear();
 
-                    boids[i].UpdateBoid();
-                    timeMs += boids[i].osqpTime;
+                        int startIdx = i * maxNeighbors;
+                        for (int j = 0; j < boids[i].numFlockmates; j++)
+                        {
+                            boids[i].neighborPos.Add(neighborData[startIdx + j].position);
+                        }
+
+                        boids[i].UpdateBoid();
+                        timeMs += boids[i].osqpTime;
+                    }
                 }
             }
             if (boidSettings.isCBF)
@@ -595,6 +606,7 @@ public class Simulation : MonoBehaviour
                 Debug.Log($"OSQP took: {timeMs}ms");
             }
 
+            //release the compute shader buffers
             boidBuffer.Release();
             neighborBuffer.Release();
             fieldBuffer.Release();
@@ -629,7 +641,7 @@ public class Simulation : MonoBehaviour
         public Vector3 separationDirection;
         public int numFlockmates;
         public int isAlive;
-        public int gIndex;
+        public int goalReached;
 
         public static int Size
         {
