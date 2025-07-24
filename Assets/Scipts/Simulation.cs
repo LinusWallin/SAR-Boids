@@ -478,7 +478,7 @@ public class Simulation : MonoBehaviour
                         {
                             Gizmos.color = Color.blue;
                             Gizmos.DrawLine(pos, pos + force.normalized * 0.2f);
-                            Gizmos.color = Color.Lerp(Color.green, Color.red, force.magnitude / 100f);
+                            Gizmos.color = Color.Lerp(Color.green, Color.red, force.magnitude / (100f * boidSettings.kAtt));
                             Gizmos.DrawLine(pos + force.normalized * 0.2f, pos + force.normalized);
                         }
                     }
