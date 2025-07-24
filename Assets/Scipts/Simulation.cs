@@ -8,7 +8,7 @@ using UnityEngine.UIElements;
 /// Simulates the boids in the search and rescue scenario
 /// </summary>
 /// <author>Linus Wallin<author/>
-public class Simulation : MonoBehaviour 
+public class Simulation : MonoBehaviour
 {
     int maxNeighbors;
     int totalMaxNeighbors;
@@ -18,25 +18,54 @@ public class Simulation : MonoBehaviour
     public GameObject[] obstacles;
     public Transform boundingBox;
     public ComputeShader compute;
+    public ComputeShader potentialCompute;
     [SerializeField] private GameObject target;
     [SerializeField] private LayerMask obstacleMask;
+    ProbabilityDist probDist;
+    Vector3[] potentialField;
     Boid[] boids;
     Boid[] aliveBoids;
     Boid[] boidCMs;
+    Vector3 gridStart;
+    Vector3 cellSize;
 
     void Start()
     {
+        gridStart = GetGridStart();
+        probDist = gameObject.AddComponent<ProbabilityDist>();
+        probDist.Init(
+            obstacleMask,
+            gridStart,
+            boidSettings.gridSize,
+            new Vector3(
+                boidSettings.cellRadius * 2,
+                boidSettings.cellRadius * 2,
+                boidSettings.cellRadius * 2
+            ),
+            target.transform.position,
+            potentialCompute,
+            boidSettings
+        );
+        potentialField = probDist.GetProbGrid();
+
+        cellSize = new Vector3(
+                boidSettings.cellRadius * 2,
+                boidSettings.cellRadius * 2,
+                boidSettings.cellRadius * 2
+            );
+
         SpawnBoids();
 
         List<Boid[]> boidList = new List<Boid[]>();
         int numGhosts = 0;
 
         //Loops through the planes of the bounding box and places ghosts on them
-        foreach (Transform wallObj in boundingBox) {
+        foreach (Transform wallObj in boundingBox)
+        {
             Vector3 wallCenter = wallObj.position;
             Vector3 wallSize = wallObj.gameObject.GetComponent<MeshCollider>().bounds.size;
             Vector3 wallRot = wallObj.rotation.eulerAngles;
-            
+
             Boid[] planeCMs = CreateCardinalMarks(wallCenter, wallSize, wallRot);
             boidList.Add(planeCMs);
             numGhosts += planeCMs.Length;
@@ -46,8 +75,10 @@ public class Simulation : MonoBehaviour
 
         //merging the arrays of the different planes into one ghost boid array
         int arrIndex = 0;
-        foreach (Boid[] boidArr in boidList) {
-            for (int i = 0; i < boidArr.Length; i++) {
+        foreach (Boid[] boidArr in boidList)
+        {
+            for (int i = 0; i < boidArr.Length; i++)
+            {
                 boidCMs[arrIndex] = boidArr[i];
                 arrIndex++;
             }
@@ -55,7 +86,8 @@ public class Simulation : MonoBehaviour
 
         //Isolated Danger Marks
         List<Boid> boidIDMs = new List<Boid>();
-        foreach (GameObject obs in obstacles) {
+        foreach (GameObject obs in obstacles)
+        {
             boidIDMs = CreateIDMs(obs, boidIDMs);
         }
         Boid[] arrayIDM = boidIDMs.ToArray();
@@ -65,32 +97,49 @@ public class Simulation : MonoBehaviour
         totalMaxNeighbors = maxNeighbors * boidSettings.numBoids;
         boids = new Boid[boidSettings.numBoids + numGhosts + numIDMs];
 
-        Debug.Log("Boids in scene" + boidSettings.numBoids * (boidSettings.numBoids + numGhosts + numIDMs));
-        
         for (int i = 0; i < boidSettings.numBoids; i++)
         {
             boids[i] = aliveBoids[i];
         }
 
-        for (int j = 0; j < numGhosts; j++) {
+        for (int j = 0; j < numGhosts; j++)
+        {
             boids[boidSettings.numBoids + j] = boidCMs[j];
         }
 
-        for (int k = 0; k < numIDMs; k++) {
+        for (int k = 0; k < numIDMs; k++)
+        {
             boids[boidSettings.numBoids + numGhosts + k] = arrayIDM[k];
         }
 
     }
 
-    void SpawnBoids ()
+    /// <summary>
+    /// Calculates the start position of the potential field
+    /// </summary>
+    /// <returns>Grid start position</returns>
+    Vector3 GetGridStart()
+    {
+        return new Vector3(
+            GameObject.Find("RightPlane").transform.position.x
+            + boidSettings.cellRadius,
+            GameObject.Find("BottomPlane").transform.position.y
+            + boidSettings.cellRadius,
+            GameObject.Find("BackPlane").transform.position.z
+            + boidSettings.cellRadius
+        );
+    }
+
+    void SpawnBoids()
     {
         aliveBoids = new Boid[boidSettings.numBoids];
-        for (int i = 0; i < boidSettings.numBoids; i++) {
+        for (int i = 0; i < boidSettings.numBoids; i++)
+        {
             GameObject b = Instantiate(boidPrefab, transform);
             b.transform.position = new Vector3(
                 boidSettings.startPosition.x +
                 boidSettings.startDist *
-                (i % boidSettings.startCols), 
+                (i % boidSettings.startCols),
                 boidSettings.startPosition.y +
                 boidSettings.startDist *
                 Mathf.Floor(i / boidSettings.startCols),
@@ -100,33 +149,37 @@ public class Simulation : MonoBehaviour
             );
             aliveBoids[i] = b.GetComponent<Boid>();
             Vector3 direction = new Vector3(
-                Random.Range(-boidSettings.maxSpeed, boidSettings.maxSpeed), 
+                Random.Range(-boidSettings.maxSpeed, boidSettings.maxSpeed),
                 Random.Range(-boidSettings.maxSpeed, boidSettings.maxSpeed),
                 Random.Range(-boidSettings.maxSpeed, boidSettings.maxSpeed)
             );
-            float speed = Random.Range(boidSettings.minSpeed,boidSettings.maxSpeed);
+            float speed = Random.Range(boidSettings.minSpeed, boidSettings.maxSpeed);
             aliveBoids[i].Init(
-                boidSettings,  
+                boidSettings,
                 direction,
                 speed,
                 true
             );
         }
         int[] leaderIndices = RandomBoidSubset(aliveBoids.Length, boidSettings.leaders);
-        foreach (int leaderIdx in leaderIndices) {
+        foreach (int leaderIdx in leaderIndices)
+        {
             Boid leaderBoid = aliveBoids[leaderIdx].GetComponent<Boid>();
             leaderBoid.isLeader = true;
             leaderBoid.target = target;
         }
     }
 
-    private int[] RandomBoidSubset(int arrLen, int subsetSize) {
+    private int[] RandomBoidSubset(int arrLen, int subsetSize)
+    {
         HashSet<int> indices = new HashSet<int>();
         int[] subset = new int[subsetSize];
 
-        while (indices.Count < subsetSize) {
+        while (indices.Count < subsetSize)
+        {
             int idx = Random.Range(0, arrLen - 1);
-            if (indices.Add(idx)) {
+            if (indices.Add(idx))
+            {
                 subset[indices.Count - 1] = idx;
             }
         }
@@ -141,7 +194,7 @@ public class Simulation : MonoBehaviour
     /// <param name="size">Size of the plane</param>
     /// <param name="rotation">Rotation of the plane</param>
     /// <returns>returns the boid array of ghosts</returns>
-    Boid[] CreateCardinalMarks (Vector3 center, Vector3 size, Vector3 rotation)
+    Boid[] CreateCardinalMarks(Vector3 center, Vector3 size, Vector3 rotation)
     {
 
         Vector3 ghostDir = new Vector3();
@@ -150,46 +203,58 @@ public class Simulation : MonoBehaviour
         string staticAxis = "";
 
         //floor and roof
-        if (rotation == Vector3.zero || rotation == new Vector3(0, 180, 180)) {
+        if (rotation == Vector3.zero || rotation == new Vector3(0, 180, 180))
+        {
             planeCenter = new Vector2(center.x, center.z);
             planeSize = new Vector2(size.x, size.z);
             staticAxis = "Y";
-            if (rotation == Vector3.zero) {
+            if (rotation == Vector3.zero)
+            {
                 ghostDir = new Vector3(0, 1, 0);
-            } else {
+            }
+            else
+            {
                 ghostDir = new Vector3(0, -1, 0);
             }
         }
         //walls along Z-axis
-        else if (rotation.x == 0 && rotation.y == 0) {
+        else if (rotation.x == 0 && rotation.y == 0)
+        {
             planeCenter = new Vector2(center.z, center.y);
             planeSize = new Vector2(size.z, size.y);
             staticAxis = "X";
-            if (rotation.z == 270) {
+            if (rotation.z == 270)
+            {
                 ghostDir = new Vector3(1, 0, 0);
-            } else {
+            }
+            else
+            {
                 ghostDir = new Vector3(-1, 0, 0);
             }
-        } 
+        }
         //walls along X-axis
-        else if (rotation.y == 0 && rotation.z == 0) {
+        else if (rotation.y == 0 && rotation.z == 0)
+        {
             planeCenter = new Vector2(center.x, center.y);
             planeSize = new Vector2(size.x, size.y);
             staticAxis = "Z";
-            if (rotation.x == 90) {
+            if (rotation.x == 90)
+            {
                 ghostDir = new Vector3(0, 0, 1);
-            } else {
+            }
+            else
+            {
                 ghostDir = new Vector3(0, 0, -1);
             }
         }
 
-        int boidCols = (int) Mathf.Floor(planeSize.x / (boidSettings.sepRatio * boidSettings.boidRadius));
-        int boidRows = (int) Mathf.Floor(planeSize.y / (boidSettings.sepRatio * boidSettings.boidRadius));
+        int boidCols = (int)Mathf.Floor(planeSize.x / (boidSettings.sepRatio * boidSettings.boidRadius));
+        int boidRows = (int)Mathf.Floor(planeSize.y / (boidSettings.sepRatio * boidSettings.boidRadius));
         int numGhostBoids = boidRows * boidCols;
 
         Vector2 botLeft = new Vector2(
-            planeCenter.x - planeSize.x/2,
-            planeCenter.y - planeSize.y/2
+            planeCenter.x - planeSize.x / 2,
+            planeCenter.y - planeSize.y / 2
         );
 
         Vector2 cellSize = new Vector2(
@@ -200,24 +265,31 @@ public class Simulation : MonoBehaviour
         Boid[] boidCM = new Boid[numGhostBoids];
         Vector3 boidCMPos = new Vector3();
 
-        for (int row = 0; row < boidRows; row++) {
-            for (int col = 0; col < boidCols; col++) {
-                if (staticAxis == "X") {
+        for (int row = 0; row < boidRows; row++)
+        {
+            for (int col = 0; col < boidCols; col++)
+            {
+                if (staticAxis == "X")
+                {
                     boidCMPos = new Vector3(
                         center.x,
-                        botLeft.y + row * cellSize.y + cellSize.y/2,
-                        botLeft.x + col * cellSize.x + cellSize.x/2
+                        botLeft.y + row * cellSize.y + cellSize.y / 2,
+                        botLeft.x + col * cellSize.x + cellSize.x / 2
                     );
-                } else if (staticAxis == "Y") {
+                }
+                else if (staticAxis == "Y")
+                {
                     boidCMPos = new Vector3(
-                        botLeft.x + col * cellSize.x + cellSize.x/2,
+                        botLeft.x + col * cellSize.x + cellSize.x / 2,
                         center.y,
-                        botLeft.y + row * cellSize.y + cellSize.y/2
+                        botLeft.y + row * cellSize.y + cellSize.y / 2
                     );
-                } else {
+                }
+                else
+                {
                     boidCMPos = new Vector3(
-                        botLeft.x + col * cellSize.x + cellSize.x/2,
-                        botLeft.y + row * cellSize.y + cellSize.y/2,
+                        botLeft.x + col * cellSize.x + cellSize.x / 2,
+                        botLeft.y + row * cellSize.y + cellSize.y / 2,
                         center.z
                     );
                 }
@@ -245,13 +317,14 @@ public class Simulation : MonoBehaviour
     /// <param name="obstacle">The obstacle which the ghost boids should be placed on</param>
     /// <param name="boidIDMs">IDMs List to keep track of ghost boids</param>
     /// <returns>Returns updated IDM List</returns>
-    List<Boid> CreateIDMs(GameObject obstacle, List<Boid> boidIDMs) {
+    List<Boid> CreateIDMs(GameObject obstacle, List<Boid> boidIDMs)
+    {
         MeshCollider meshCollider = obstacle.GetComponent<MeshCollider>();
-        Bounds bounds =  meshCollider.sharedMesh.bounds; //Gets local bounds of obstacle
+        Bounds bounds = meshCollider.sharedMesh.bounds; //Gets local bounds of obstacle
         Vector3 center = bounds.center;
         Vector3 extents = bounds.extents;
         Vector3 gridExtents = Vector3.Scale(extents, obstacle.transform.lossyScale);
-        Vector3 boidsInDir = (gridExtents*2)/(boidSettings.boidRadius*boidSettings.sepRatio);
+        Vector3 boidsInDir = (gridExtents * 2) / (boidSettings.boidRadius * boidSettings.sepRatio);
         boidsInDir = new Vector3(
             Mathf.Floor(boidsInDir.x),
             Mathf.Floor(boidsInDir.y),
@@ -306,7 +379,8 @@ public class Simulation : MonoBehaviour
             )
         };
 
-        foreach (FaceData face in faces) {
+        foreach (FaceData face in faces)
+        {
             Vector3 faceCenter = obstacle.transform.InverseTransformPoint(face.center);
             Vector3 normal = obstacle.transform.InverseTransformDirection(face.normal);
             Vector3 rowDir = obstacle.transform.InverseTransformDirection(face.rowDir);
@@ -320,31 +394,40 @@ public class Simulation : MonoBehaviour
 
             int numRows = Mathf.Abs((int)Vector3.Dot(rowDir, boidsInDir));
             int numCols = Mathf.Abs((int)Vector3.Dot(colDir, boidsInDir));
-            
+
             Vector3 gridStart = botLeft;
 
-            if (numRows == 0) {
+            if (numRows == 0)
+            {
                 gridStart += rowExt;
                 numRows = 1;
-            } else {
+            }
+            else
+            {
                 gridStart += rowStepSize / 2;
             }
-            if (numCols == 0) {
+            if (numCols == 0)
+            {
                 gridStart += colExt;
                 numCols = 1;
-            } else {
+            }
+            else
+            {
                 gridStart += colStepSize / 2;
             }
-            
-            for (int x = 0; x < numRows; x++) {
-                for (int y = 0; y < numCols; y++) {
+
+            for (int x = 0; x < numRows; x++)
+            {
+                for (int y = 0; y < numCols; y++)
+                {
                     Vector3 posIDM = gridStart + rowStepSize * x + colStepSize * y;
                     GameObject ghostBoid = Instantiate(boidPrefab, transform);
                     RaycastHit hit;
                     Vector3 surfaceNormal = normal;
                     Vector3 globalPos = obstacle.transform.TransformPoint(posIDM);
                     Vector3 globalNormal = obstacle.transform.TransformDirection(normal);
-                    if (Physics.Raycast(globalPos + globalNormal, -globalNormal, out hit, obstacleMask)) {
+                    if (Physics.Raycast(globalPos + globalNormal, -globalNormal, out hit, obstacleMask))
+                    {
                         surfaceNormal = hit.normal;
                         posIDM = hit.point;
                     }
@@ -359,7 +442,7 @@ public class Simulation : MonoBehaviour
                         obstacle.transform.localScale.z
                     );
                     boidIDMs.Add(ghostBoid.GetComponent<Boid>());
-                    boidIDMs[boidIDMs.Count-1].Init(
+                    boidIDMs[boidIDMs.Count - 1].Init(
                         boidSettings,
                         surfaceNormal,
                         0,
@@ -371,14 +454,50 @@ public class Simulation : MonoBehaviour
         return boidIDMs;
     }
 
+    /// <summary>
+    /// Debugging function that draws the lines of the potential field
+    /// </summary>
+    void OnDrawGizmos()
+    {
+        if (potentialField == null) return;
+        if (potentialField.Length == 0) return;
+
+        for (int i = 0; i < boidSettings.gridSize.x; i++)
+        {
+            for (int j = 0; j < boidSettings.gridSize.y; j++)
+            {
+                for (int k = 0; k < boidSettings.gridSize.z; k++)
+                {
+                    if (i % 5 == 0 && j % 5 == 0 && k % 5 == 0)
+                    {
+                        int index = i + j * (int)boidSettings.gridSize.x + k * (int)(boidSettings.gridSize.x * boidSettings.gridSize.y);
+                        Vector3 pos = gridStart + new Vector3(i, j, k) * boidSettings.cellRadius * 2;
+                        Vector3 force = potentialField[index];
+
+                        if (!float.IsNaN(force.x) && force != Vector3.zero)
+                        {
+                            Gizmos.color = Color.blue;
+                            Gizmos.DrawLine(pos, pos + force.normalized * 0.2f);
+                            Gizmos.color = Color.Lerp(Color.green, Color.red, force.magnitude / (100f * boidSettings.kAtt));
+                            Gizmos.DrawLine(pos + force.normalized * 0.2f, pos + force.normalized);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     void Update()
     {
-        if (boids != null) {
+        if (boids != null)
+        {
             double timeMs = 0.0;
             var boidData = new BoidData[boids.Length];
 
-            for (int i = 0; i < boids.Length; i++) {
-                if (boids[i] != null) {
+            for (int i = 0; i < boids.Length; i++)
+            {
+                if (boids[i] != null)
+                {
                     boidData[i].position = boids[i].position;
                     boidData[i].direction = boids[i].direction;
                     if (boids[i].isAlive)
@@ -397,19 +516,42 @@ public class Simulation : MonoBehaviour
 
             var neighborData = new NeighborData[totalMaxNeighbors];
             var neighborBuffer = new ComputeBuffer(
-                totalMaxNeighbors, 
+                totalMaxNeighbors,
                 NeighborData.Size
             );
             neighborBuffer.SetData(neighborData);
 
+            var fieldBuffer = new ComputeBuffer(potentialField.Length, sizeof(float) * 3);
+            fieldBuffer.SetData(potentialField);
+
             compute.SetBuffer(0, "boids", boidBuffer);
             compute.SetBuffer(0, "neighbors", neighborBuffer);
+            compute.SetBuffer(0, "potentialField", fieldBuffer);
             compute.SetInt("numBoids", boids.Length);
             compute.SetInt("maxNeighbors", maxNeighbors);
             compute.SetFloat("neighborMaxDist", boidSettings.neighborMaxDist);
             compute.SetFloat("desiredDist", boidSettings.desiredDist);
+            compute.SetInt("isField", boidSettings.potentialField ? 1 : 0);
+            compute.SetInts(
+                "gridSize",
+                (int)boidSettings.gridSize.x,
+                (int)boidSettings.gridSize.y,
+                (int)boidSettings.gridSize.z
+            );
+            compute.SetFloats(
+                "cellSize",
+                boidSettings.cellRadius * 2,
+                boidSettings.cellRadius * 2,
+                boidSettings.cellRadius * 2
+            );
+            compute.SetFloats(
+                "gridStart",
+                gridStart.x,
+                gridStart.y,
+                gridStart.z
+            );
 
-            int threadGroups = Mathf.CeilToInt(boidSettings.numBoids / (float) threadGroupSize);
+            int threadGroups = Mathf.CeilToInt(boidSettings.numBoids / (float)threadGroupSize);
             compute.Dispatch(0, threadGroups, 1, 1);
 
             boidBuffer.GetData(boidData);
@@ -422,9 +564,22 @@ public class Simulation : MonoBehaviour
                     boids[i].flockCenter = boidData[i].flockCenter;
                     boids[i].numFlockmates = boidData[i].numFlockmates;
                     boids[i].alignmentForce = boidData[i].flockDirection;
+                    /*Debug.Log("alignment: " + boids[i].alignmentForce);
+                    Vector3 p = boids[i].position;
+                    Vector3 pp = new Vector3(
+                            Mathf.Floor((p.x - gridStart.x) / cellSize.x),
+                            Mathf.Floor((p.y - gridStart.y) / cellSize.y),
+                            Mathf.Floor((p.z - gridStart.z) / cellSize.z)
+                        );
+                    int coordinateIdx = (int)pp.x + (int)pp.y * (int)boidSettings.gridSize.x + (int)pp.z * (int)boidSettings.gridSize.x * (int)boidSettings.gridSize.y;
+                    Vector3 f = potentialField[coordinateIdx];
+                    Debug.Log("ACTUAL FORCE: " + f);
+                    Debug.Log("real: " + boidData[i].gIndex + " ; " + " pot: " + coordinateIdx);
+                    Debug.Log(boidData[i].position + " ; " + boids[i].position);
+                    Debug.DrawLine(boids[i].position, boids[i].position + f, Color.yellow);*/
                     boids[i].separationForce = boidData[i].separationDirection.normalized;
                     boids[i].neighborPos.Clear();
-                    
+
                     int startIdx = i * maxNeighbors;
                     for (int j = 0; j < boids[i].numFlockmates; j++)
                     {
@@ -435,21 +590,27 @@ public class Simulation : MonoBehaviour
                     timeMs += boids[i].osqpTime;
                 }
             }
-            Debug.Log($"OSQP took: {timeMs}ms");
+            if (boidSettings.isCBF)
+            {
+                Debug.Log($"OSQP took: {timeMs}ms");
+            }
 
             boidBuffer.Release();
             neighborBuffer.Release();
+            fieldBuffer.Release();
         }
     }
 
-    public struct FaceData {
+    public struct FaceData
+    {
         public GameObject obstacle;
         public Vector3 center;
         public Vector3 normal;
         public Vector3 rowDir;
         public Vector3 colDir;
 
-        public FaceData(GameObject obstacle, Vector3 center, Vector3 normal, Vector3 rowDir, Vector3 colDir) {
+        public FaceData(GameObject obstacle, Vector3 center, Vector3 normal, Vector3 rowDir, Vector3 colDir)
+        {
             this.obstacle = obstacle;
             this.center = obstacle.transform.TransformPoint(center);
             this.normal = obstacle.transform.TransformDirection(normal);
@@ -458,7 +619,8 @@ public class Simulation : MonoBehaviour
         }
     }
 
-    public struct BoidData {
+    public struct BoidData
+    {
         public Vector3 position;
         public Vector3 direction;
 
@@ -467,21 +629,27 @@ public class Simulation : MonoBehaviour
         public Vector3 separationDirection;
         public int numFlockmates;
         public int isAlive;
+        public int gIndex;
 
-        public static int Size {
-            get {
-                return sizeof (float) * 3 * 5 + sizeof (int) * 2;
+        public static int Size
+        {
+            get
+            {
+                return sizeof(float) * 3 * 5 + sizeof(int) * 3;
             }
         }
     }
 
-    public struct NeighborData {
+    public struct NeighborData
+    {
         public uint boidIdx;
         public Vector3 position;
 
-        public static int Size {
-            get {
-                return sizeof (uint) + sizeof (float) * 3;
+        public static int Size
+        {
+            get
+            {
+                return sizeof(uint) + sizeof(float) * 3;
             }
         }
     }

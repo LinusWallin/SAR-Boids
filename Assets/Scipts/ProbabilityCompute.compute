@@ -1,0 +1,47 @@
+#pragma kernel CSProbabilityMain
+
+StructuredBuffer<uint> obstaclePos;
+RWStructuredBuffer<float3> probGrid;
+
+int xMax;
+int yMax;
+int zMax;
+int numObs;
+float dIO; //distance of influence for obstacles
+float kAttractive;
+float kRepulsive;
+float3 cellSize;
+float3 gridStart;
+float3 qGoal;
+
+float3 IndexToCoordinate(uint cellIndex) {
+    uint x = cellIndex % xMax;
+    uint y = (cellIndex / xMax) % yMax;
+    uint z = cellIndex / (xMax * yMax);
+    return gridStart + float3(x, y, z) * cellSize;
+}
+
+[numthreads(1024, 1, 1)]
+void CSProbabilityMain (uint3 id : SV_DispatchThreadID) {
+    uint cellIndex = id.x;
+    float3 currentPos = IndexToCoordinate(cellIndex);
+
+    //Calculate the force of the potential field at the current
+    //grid position
+    float3 attractiveForce = (
+        (-1 * kAttractive) * (currentPos - qGoal)
+    );
+    float3 repulsiveForce = 0;
+    for (uint i = 0; i < numObs; i++) {
+        float3 qObs = IndexToCoordinate(obstaclePos[i]);
+        float dQI = distance(currentPos, qObs);
+        if (dQI < dIO && dQI > 0.0001) {
+            repulsiveForce += (
+                kRepulsive * (currentPos - qObs) / pow(dQI, 3)
+                * ((1 / dQI) - (1 / dIO))
+            );
+        }
+    }
+    float3 totalForce = attractiveForce + repulsiveForce;
+    probGrid[cellIndex] = totalForce;
+}

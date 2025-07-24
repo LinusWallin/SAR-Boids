@@ -10,6 +10,7 @@ struct Boid {
     float3 separationDirection;
     int numFlockmates;
     int isAlive;
+    int gIndex;
 };
 
 struct Neighbor {
@@ -19,10 +20,22 @@ struct Neighbor {
 
 RWStructuredBuffer<Boid> boids;
 RWStructuredBuffer<Neighbor> neighbors;
+RWStructuredBuffer<float3> potentialField;
+
 int numBoids;
 int maxNeighbors;
 float neighborMaxDist;
 float desiredDist;
+
+int isField;
+int3 gridSize;
+float3 cellSize;
+float3 gridStart;
+
+uint CoordinateToIndex(int3 pos) {
+    uint coordinateIdx = pos.x + pos.y * gridSize.x + pos.z * gridSize.x * gridSize.y;
+    return coordinateIdx;
+}
 
 [numthreads(threadGroupSize, 1, 1)]
 void CSMain (uint3 id : SV_DispatchThreadID) {
@@ -53,6 +66,18 @@ void CSMain (uint3 id : SV_DispatchThreadID) {
                     }
                 }
             }
+        }
+        if (isField == 1) {
+            //int3 boidGridIdx = int3(floor((currBoid.position - gridStart) / cellSize));
+            //uint gridIndex = CoordinateToIndex(boidGridIdx);
+            int3 boidGridIdx = int3(
+                floor((currBoid.position.x - gridStart.x)/cellSize.x),
+                floor((currBoid.position.y - gridStart.y)/cellSize.y),
+                floor((currBoid.position.z - gridStart.z)/cellSize.z)
+            );
+            uint gridIndex = boidGridIdx.x + boidGridIdx.y * gridSize.x + boidGridIdx.z * gridSize.x * gridSize.y;
+            currBoid.gIndex = gridIndex;
+            currBoid.flockDirection = potentialField[gridIndex];
         }
     }
     boids[id.x] = currBoid;

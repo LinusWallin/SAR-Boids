@@ -74,13 +74,15 @@ public class Boid : MonoBehaviour
             0f
         );
         direction = direction.normalized;
-        var sw = new System.Diagnostics.Stopwatch();
-        sw.Start();
-        Vector3 osqpDirection = OSQPSolver.RunOSQPSolver(this, boidSettings.OSQP_DS, boidSettings.OSQP_C);
-        sw.Stop();
-        osqpTime = sw.Elapsed.TotalMilliseconds;
-        if (osqpDirection.magnitude < 1000) {
-            direction = osqpDirection.normalized;
+        if (boidSettings.isCBF) {
+            var sw = new System.Diagnostics.Stopwatch();
+            sw.Start();
+            Vector3 osqpDirection = OSQPSolver.RunOSQPSolver(this, boidSettings.OSQP_DS, boidSettings.OSQP_C);
+            sw.Stop();
+            osqpTime = sw.Elapsed.TotalMilliseconds;
+            if (osqpDirection.magnitude < 1000) {
+                direction = osqpDirection.normalized;
+            }
         }
         speed = Mathf.Clamp(speed, boidSettings.minSpeed, boidSettings.maxSpeed);
         transform.Translate(direction * speed * Time.deltaTime, Space.World);
@@ -106,18 +108,24 @@ public class Boid : MonoBehaviour
     /// <summary>
     /// Applies the alignment rule to the boid
     /// </summary>
-    private void AlignmentRule() {
-        if (isLeader && target != null) {
+    private void AlignmentRule()
+    {
+        if (isLeader && target != null && boidSettings.isCBF)
+        {
             Vector3 compassDir = target.transform.position - position;
-            alignmentForce += compassDir * 
+            alignmentForce += compassDir *
             Mathf.Max(
-                1, 
+                1,
                 numFlockmates * boidSettings.leaderInfluence
             );
         }
+        if (alignmentForce != new Vector3(0, 0, 0))
+        {
+            Debug.DrawLine(position, position + alignmentForce, Color.green);
+        }
         int totalFlock = numFlockmates + (isLeader ? 1 : 0);
         Vector3 normalizedAlignment = (
-            alignmentForce/
+            alignmentForce /
             (totalFlock == 0 ? 1 : totalFlock)
         ).normalized;
         alignmentForce = normalizedAlignment / boidSettings.alignmentWeight;
