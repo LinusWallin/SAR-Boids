@@ -45,7 +45,6 @@ void CSMain (uint3 id : SV_DispatchThreadID) {
     currBoid.numFlockmates = 0;
     if (currBoid.isAlive == 1 && currBoid.goalReached == 0){
         if (length(targetPos - currBoid.position) < goalRadius) {
-            currBoid.isAlive = 0;
             currBoid.goalReached = 1;
         }
         else {
@@ -53,22 +52,24 @@ void CSMain (uint3 id : SV_DispatchThreadID) {
             for (uint indexBoid = 0; indexBoid < numBoids; indexBoid++) {
                 if (id.x != indexBoid) {
                     Boid boidI = boids[indexBoid];
-                    if (all(boidI.position != float3(0,0,0))){
-                        float3 offset = boidI.position - currBoid.position;
-                        float sqrDist = offset.x * offset.x + offset.y * offset.y + offset.z * offset.z;
+                    if (boidI.goalReached == 0) {
+                        if (all(boidI.position != float3(0,0,0))) {
+                            float3 offset = boidI.position - currBoid.position;
+                            float sqrDist = offset.x * offset.x + offset.y * offset.y + offset.z * offset.z;
 
-                        //Checks for neighboring boids within a set radius of the current boid
-                        if (sqrDist < neighborMaxDist * neighborMaxDist) {
-                            Neighbor n;
-                            n.boidIdx = id.x;
-                            n.position = boidI.position;
-                            neighbors[startIdx + currBoid.numFlockmates] = n;
-                            currBoid.numFlockmates += 1;
-                            currBoid.flockDirection += boidI.direction;
-                            currBoid.flockCenter += boidI.position;
+                            //Checks for neighboring boids within a set radius of the current boid
+                            if (sqrDist < neighborMaxDist * neighborMaxDist) {
+                                Neighbor n;
+                                n.boidIdx = id.x;
+                                n.position = boidI.position;
+                                neighbors[startIdx + currBoid.numFlockmates] = n;
+                                currBoid.numFlockmates += 1;
+                                currBoid.flockDirection += boidI.direction;
+                                currBoid.flockCenter += boidI.position;
 
-                            if (sqrDist < desiredDist * desiredDist) {
-                                currBoid.separationDirection -= offset;
+                                if (sqrDist < desiredDist * desiredDist) {
+                                    currBoid.separationDirection -= offset;
+                                }
                             }
                         }
                     }
