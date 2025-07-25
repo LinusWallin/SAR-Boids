@@ -573,7 +573,7 @@ public class Simulation : MonoBehaviour
             boidBuffer.GetData(boidData);
             neighborBuffer.GetData(neighborData);
 
-            for (int i = 0; i < boids.Length; i++)
+            for (int i = 0; i < boidSettings.numBoids; i++)
             {
                 if (boids[i] != null && boids[i].isAlive)
                 {
