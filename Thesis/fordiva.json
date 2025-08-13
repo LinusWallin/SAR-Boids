@@ -1,0 +1,16 @@
+{
+"Author1": {"Last name": "Wallin", "First name": "Linus", "Local User Id": "u107775", "E-mail": "liwallin@kth.se", "organisation": {"L1": "School of Electrical Engineering and Computer Science" }},
+"Cycle": "2", "Course code": "DA231X", "Credits": "30.0",
+"Degree1": {"Educational program": "Master's Programme, Computer Science, 120 credits","programcode": "TCSCM" ,"Degree": "Master's Programme, Computer Science, 120 credits" ,"subjectArea": "Computer Science" },
+"Title": {"Main title": "This is the title in the language of the thesis", "Subtitle": "A subtitle in the language of the thesis", "Language": "eng" }, "Alternative title": {"Main title": "Detta är den svenska översättningen av titeln", "Subtitle": "Detta är den svenska översättningen av undertiteln", "Language": "swe" },
+"Supervisor1": {"Last name": "Peters", "First name": "Christopher", "Local User Id": "u7134", "E-mail": "chpeters@kth.se", "organisation": {"L1": "School of Electrical Engineering and Computer Science" ,"L2": "Computer Science" }},
+"Examiner1": {"Last name": "Weinkauf", "First name": "Tino", "Local User Id": "u3641", "E-mail": "weinkauf@kth.se", "organisation": {"L1": "School of Electrical Engineering and Computer Science" ,"L2": "Computer Science" }},
+
+"National Subject Categories": "10201, 10206",
+"Other information": {"Year": "2025", "Number of pages": "1,23" },
+"Copyrightleft": "copyright",
+"Series": {"Title of series": "TRITA -- EECS-EX" , "No. in series": "2024:0000" },
+"Opponents": {"Name": "A. B. Normal \& A. X. E. Normalè"},
+"Presentation": {"Date": "2025-09-15 13:00" ,"Language": "eng" ,"Room": "via Zoom https://kth-se.zoom.us/j/ddddddddddd" ,"Address": "Isafjordsgatan 22 (Kistagången 16)" ,"City": "Stockholm" },
+"Number of lang instances": "2",
+}

@@ -88,3 +88,7 @@ crashlytics-build.properties
 *.synctex.gz
 *.tdn
 *.toc
+
+### TEMP GIT IGNORE FOR LINUX
+Assets/
+Packages/
