@@ -61,6 +61,8 @@
 % warnings
 \newcommand*{\warningExpl}[1]{\todo[inline, backgroundcolor=kth-lightred40]{#1}} %% \warningExpl{warnings}
 
+\newcommand{\mycomment}[1]{}
+
 % Uncomment to hide specific comments, to hide **all** ToDos add `final` to
 % document class
 % \renewcommand\warningExpl[1]{}
@@ -511,7 +513,7 @@ We would like to thank xxxx for having yyyy.
 %throughout your thesis (be consistent). This figure will also help you later
 %delimit what you are going to do and what others have done or will do.}
 
-Search and rescue (SAR) can be aided by autonomous or teleoperated robots and multi-robot systems, which can help the SAR teams map the area, monitor, or search for victims. There are multiple SAR scenarios in which robots can aid the rescuers, where one such scenario category is urban SAR in which small robots can be used to find a way through collapsed buildings or other urban environments\cite{Queralta2020}.\\
+Search and rescue (SAR) can be aided by autonomous or teleoperated robots and multi-robot systems, which can help the SAR teams map the area, monitor, or search for victims. There are multiple SAR scenarios in which robots can aid the rescuers, where one such scenario category is urban SAR in which small robots can be used to find their way through collapsed buildings or other urban environments\cite{Queralta2020}.\\
 
 As earthquakes are very serious disasters which can be fatal due to buildings collapsing and trapping people, it is important that the victims can be found and get help fast. This is an area in which research has been done on multi-agent systems and how they can be used for collapsed building SAR scenarios.\cite{Nazarova2020}\\
 
@@ -526,14 +528,22 @@ The high level objective of the degree project is to contribute to the field of 
 \section{Problem Description}
 \label{sec:problemDescription}
 
+
+
 % Research Question
 \section{Research Question}
 \label{sec:researchQuestion}
+
+\textbf{RQ1:} How does target-seeking affect the 3D boids algorithm in terms of coverage, safety, and number of boids that are able to find the target location?\cite{Hengstebeck2024}
+
+\textbf{RQ2:} How does adding a high level planner in the form of a artificial potential field affect the 3D boids algorithm in terms of coverage, safety, and number of boids that are able to find the target.\cite{Hengstebeck2024}\cite{APF}
 
 \subsection{Research Methodology}
 \label{sec:researchMethodology}
 %\generalExpl{Introduce your choice of methodology/methodologies and method/methods – and the reason why you chose them. Contrast them with and explain why you did not choose other methodologies or methods. (The details of the actual methodology and method you have chosen will be given in Chapter~\ref{ch:methods}. Note that in Chapter~\ref{ch:methods}, the focus could be research strategies, data collection, data analysis, and quality assurance.)\\
 %In this section you should present your philosophical assumption(s), research method(s), and research approach(es).}
+
+The 
 
 \subsection{Scientific and engineering issues}
 
@@ -546,8 +556,12 @@ The high level objective of the degree project is to contribute to the field of 
 
 %\generalExpl{In addition to presenting the goal(s), you might also state what the deliverables and results of the project are.}
 
-\section{Delimitations}
+The goal of the thesis is provide insight into the potential of using APF in combination with the \textit{boids algorithm} to find missing people in SAR scenarios with collapsed buildings. 
+
+\section{Scope \& Delimitations}
 %\generalExpl{Describe the boundary/limits of your thesis project and what you are explicitly not going to do. This will help you bound your efforts – as you have clearly defined what is out of the scope of this thesis project. Explain the delimitations. These are all the things that could affect the study if they were examined and included in the degree project.}
+
+The scope of this project is to explore the potential of using boids affected by an APF in real SAR scenarios with collapsed buildings. 
 
 \section{Structure of the thesis}
 %Chapter~\ref{ch:background} presents relevant background information about xxx.  Chapter~\ref{ch:methods} presents the methodology and method used to solve the problem. …
@@ -709,8 +723,8 @@ The high level objective of the degree project is to contribute to the field of 
 \section{Evaluation framework}
 \label{sec:evaluationFramework}
 
-\section{System documentation}
-\label{sec:systemDocumentation}
+%\section{System documentation}
+%\label{sec:systemDocumentation}
 %\sweExpl{Systemdokumentation\\
 %Med vilka dokument och hur skall en konstruerad prototyp dokumenteras? Detta blir ofta bilagor till rapporten och det som problemägaren till det ursprungliga problemet (industrin) ofta vill ha.\\
 %Bland dessa bilagor återfinns ofta, och enligt någon angiven standard, kravdokument, arkitekturdokument, designdokumnet, implementationsdokument, driftsdokument, testprotokoll mm.}
@@ -829,6 +843,9 @@ The high level objective of the degree project is to contribute to the field of 
 %\engExpl{Describe valid future work that you or someone else could or should do.\\
 %Consider: What you have left undone? What are the next obvious things to be done? What hints can you give to the next person who is going to follow up on your work?}
 
+%Multi-Agent Formation Control APF
+
+
 \subsection{What has been left undone?}
 \label{what-has-been-left-undone}
 
@@ -867,7 +884,7 @@ The high level objective of the degree project is to contribute to the field of 
 
 
 %\warningExpl{If you do not have an appendix, do not include the \textbackslash cleardoublepage command below; otherwise, the last page number in the metadata will be one too large.}
-\cleardoublepage
+\mycomment{\cleardoublepage
 \appendix
 \renewcommand{\chaptermark}[1]{\markboth{Appendix \thechapter\relax:\thinspace\relax#1}{}}
 \chapter{Supporting materials}
@@ -1034,6 +1051,6 @@ commentstyle=\color{black}, backgroundcolor=\color{white}]{lib/acronyms-for-pdfl
 }
 {}
 \fi
-
+}
 
 \end{document}
