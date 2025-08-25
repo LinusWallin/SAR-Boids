@@ -13,7 +13,7 @@
         "**/*.unityproj": true,
         "**/*.dll": true,
         "**/*.exe": true,
-        "**/*.pdf": true,
+        "**/*.pdf": false,
         "**/*.mid": true,
         "**/*.midi": true,
         "**/*.wav": true,
