@@ -199,7 +199,7 @@ nopostdot]{glossaries}
 % insert the configuration information with author(s), examiner, supervisor(s), ...
 \input{custom_configuration}
 
-\title{This is the title in the language of the thesis}
+\title{3D Boids in Safety-critical Collapsed Building Search and Rescue Scenarios Represented by Artificial Potential Fields}
 \subtitle{A subtitle in the language of the thesis}
 
 
@@ -209,8 +209,8 @@ nopostdot]{glossaries}
 % Enter the English and Swedish keywords here for use in the PDF metadata _and_ for later use
 % following the respective abstract.
 % Try to put the words in the same order in both languages to facilitate matching. For example:
-\EnglishKeywords{Canvas Learning Management System, Docker containers, Performance tuning}
-\SwedishKeywords{Canvas Lärplattform, Dockerbehållare, Prestandajustering}
+\EnglishKeywords{Boid, Search and Rescue, Safety-critical, Artificial Potential Field}
+\SwedishKeywords{Boid, Räddningsaktion, Säkerhets Kritisk, Artificiellt Potential Fält}
 
 %%%%% For the oral presentation
 %% Add this information once your examiner has scheduled your oral presentation
@@ -369,25 +369,25 @@ eng
 %%% These page(s) will be removed before the thesis is inserted into DiVA.
 
 \begin{scontents}[store-env=abstracts,print-env=true]
-Write an abstract that is about 250 and 350 words (1/2 A4-page)  with the following components:
+%Write an abstract that is about 250 and 350 words (1/2 A4-page)  with the following components:
 % key parts of the abstract
-\begin{itemize}
-  \item What is the topic area? (optional) Introduces the subject area for the project.
-  \item Short problem statement
-  \item Why was this problem worth a Bachelor's/Master’s thesis project? (\ie, why is the problem both significant and of a suitable degree of difficulty for a Bachelor's/Master’s thesis project? Why has no one else solved it yet?)
-  \item How did you solve the problem? What was your method/insight?
-  \item Results/Conclusions/Consequences/Impact: What are your key results/\linebreak[4]conclusions? What will others do based on your results? What can be done now that you have finished - that could not be done before your thesis project was completed?
-\end{itemize}
+%\begin{itemize}
+%  \item What is the topic area? (optional) Introduces the subject area for the project.
+%  \item Short problem statement
+%  \item Why was this problem worth a Bachelor's/Master’s thesis project? (\ie, why is the problem both significant and of a suitable degree of difficulty for a Bachelor's/Master’s thesis project? Why has no one else solved it yet?)
+%  \item How did you solve the problem? What was your method/insight?
+%  \item Results/Conclusions/Consequences/Impact: What are your key results/\linebreak[4]conclusions? What will others do based on your results? What can be done now that you have finished - that could not be done before your thesis project was completed?
+%\end{itemize}
 
-Search and rescue (SAR) teams are a key part of finding missing people in the event of a natural catastrophy. Time is of the essence since the missing person might be in a critical health state.
+Search and rescue (SAR) teams are a key part of finding missing people in the event of a natural catastrophy. To increase the likelihood of finding the missing people in SAR scenarios and reduce the time to do so, autonomous or teleoperated robots and multi-robot systems have become a key tool in aiding the SAR teams. The robots can help SAR teams map the area, monitor, or search for the vicitms in multiple different types of SAR scenarios.
 
-To increase the likelihood of finding the missing people in SAR scenarios and reduce the time to do so, drones have become a key tool in aiding the SAR teams. 
+A common factor for the SAR scenarios is that time is of the essence, since the missing person might be in a critical health state. The issue with having a SAR team controlling the drones is that only one drone can be controlled by one person. By using swarm robotics it is possible for SAR teams to use a large amount of drones to cover larger areas and find the missing people faster.
 
-The issue with having a SAR team controlling the drones is that only one drone can be controlled by one person. By using swarm robotics it is possible for SAR teams to use a large amount of drones to cover larger areas and find the missing people faster.
+There are different swarm robotics algorithms and it is in the publics interest to test them all on SAR scenarios, to see which is the best. One algorithm that could be used in SAR scenarios is the boids algorithm in combination with a control barrier function (CBF) that reduces collisions. This paper aims to explore the possible benefit of guiding the boids algorithm with a artificial potential field (APF).
 
-There are different swarm robotics algorithms and it is of the publics interest to test them all on SAR scenarios, to see which is the best. One algorithm that could be used in these scenarios is the boids algorithm in combination with a control barrier function (CBF) that reduces collisions. This paper aims to explore the possible benefit of guiding the boids algorithm with a artificial potential field (APF).
+The boids algorithm and potential field will be evaluated on X SAR scenarios that highlight different aspects of real SAR operations.
 
-The boids algorithm and potential field will be evaluated on X SAR scenarios that highlight aspects of real SAR operations.
+The findings suggest that ...
 
 \end{scontents}
 %Text superscripts and subscripts with \textbackslash textsubscript and \textbackslash textsuperscript: A\textsubscript{x} and A\textsuperscript{x}.
@@ -478,7 +478,7 @@ We would like to thank xxxx for having yyyy.
  }
 %\glsaddall
 %\printglossaries[type=\acronymtype, title={List of acronyms}]
-\printglossary[style=mylong, type=\acronymtype, title={List of acronyms and abbreviations}]
+%\printglossary[style=mylong, type=\acronymtype, title={List of acronyms and abbreviations}]
 %\printglossary[type=\acronymtype, title={List of acronyms and abbreviations}]
 
 %\printnoidxglossary[style=mylong, title={List of acronyms and abbreviations}]
@@ -544,16 +544,22 @@ The high level objective of the degree project is to contribute to the field of 
 \section{Research Question}
 \label{sec:researchQuestion}
 
-\textbf{RQ1:} How does target-seeking affect the 3D boids algorithm in terms of coverage, safety, and number of boids that are able to find the target location?\cite{Hengstebeck2024}
+This thesis explores the possible benefits of guiding boids with a APF representing the scenario environment. It also explores the importance of CBF and how it affects the boids algorithm in combination with the APF.
 
-\textbf{RQ2:} How does adding a high level planner in the form of a artificial potential field affect the 3D boids algorithm in terms of coverage, safety, and number of boids that are able to find the target.\cite{Hengstebeck2024}\cite{APF}
+\textit{\textbf{RQ1:} How does target-seeking affect the 3D boids algorithm in terms of coverage, safety, and number of boids that are able to find the target location?}\cite{Hengstebeck2024}
+
+\textit{\textbf{RQ2:} How does adding a CBF to the boids algorithm affect the 3D boids algorithm in terms of coverage, safety, and number of boids that are able to find the target loctaion?}\cite{Hengstebeck2024}
+
+\textit{\textbf{RQ3:} How does adding a high level planner in the form of a artificial potential field affect the 3D boids algorithm in terms of coverage, safety, and number of boids that are able to find the target.}\cite{Hengstebeck2024}\cite{APF}
+
+%Do I need all these RQS or is RQ2 redundant? Should I also have a RQ that compares APF with CBF to APF without CBF?
 
 \subsection{Research Methodology}
 \label{sec:researchMethodology}
 %\generalExpl{Introduce your choice of methodology/methodologies and method/methods – and the reason why you chose them. Contrast them with and explain why you did not choose other methodologies or methods. (The details of the actual methodology and method you have chosen will be given in Chapter~\ref{ch:methods}. Note that in Chapter~\ref{ch:methods}, the focus could be research strategies, data collection, data analysis, and quality assurance.)\\
 %In this section you should present your philosophical assumption(s), research method(s), and research approach(es).}
 
-The 
+The research will have a quantative approach, where the different algorithms will be compared to each other in simulations on various SAR scenario environments.
 
 %\subsection{Scientific and engineering issues}
 
@@ -661,44 +667,50 @@ Another delimiation of the project will be that delays in signal processing will
 %(6) Resonemanget bygger på att studenter på hing-programmet ofta skall konstruera något åt problemägaren och att man till detta måste koppla en intressant ingenjörsfråga. Det finns hela tiden en dualism mellan dessa aspekter i exjobbet.
 %}
 
-\section{Research Process}
-\label{sec:researchProcess}
+\section{Overview}
+\label{sec:overview}
 
-%\generalExpl{Example of using customized item labels.}
-%Some steps in the process:
-%\begin{enumerate}[leftmargin=*, label=\textbf{Step \arabic*}, ref=Step \arabic*] %labelindent=1em for indent
-%    \itemsep0em
-%    \item \label{x:s1} plan experiment,
-%    \item \label{x:s2} conduct experiment,
-%    \item \label{x:s3} analyze data from the experiment, and
-%    \item \label{x:s4} discuss the results of the analysis.
-%\end{enumerate}
-
-
-\section{Research Paradigm}
-\label{sec:researchParadigm}
+%\section{Research Paradigm}
+%\label{sec:researchParadigm}
 %\sweExpl{Undersökningsparadigm\\
 %Exempelvis\\
 %Positivistisk (vad/hur fungerar det?) kvalitativ fallstudie med en deduktivt (förbestämd) vald ansats och ett induktivt(efterhand uppstår dataområden och data) insamlade av data och erfarenheter.}
 
-\section{Data Collection}
-\label{sec:dataCollection}
+%\section{Data Collection}
+%\label{sec:dataCollection}
 %\generalExpl{This should also show that you are aware of the social and ethical concerns that might be relevant to your data collection method.}
 
-\subsection{Sampling}
+%\subsection{Sampling}
 
-\subsection{Sample Size}
+%\subsection{Sample Size}
 
-\subsection{Target Population}
+%\subsection{Target Population}
 
-\section[Experimental design/Planned Measurements]{Experimental design and\\Planned Measurements}
-\label{sec:experimentalDesign}
+%\section[Experimental design/Planned Measurements]{Experimental design and\\Planned Measurements}
+%\label{sec:experimentalDesign}
 
-\subsection{Test environment/test bed/model}
+%\subsection{Test environment/test bed/model}
 %\engExpl{Describe everything that someone else would need to reproduce your test environment/test bed/model/… .}
 
-\subsection{Hardware/Software to be used}
+\section{Implementing Boids}
+\label{sec:implmeentingBoids}
 
+\section{Implementing Control Barrier Function}
+\label{sec:implementingCBF}
+
+\section{Implementing Artificial Potential Field}
+\label{sec:implementingAPF}
+
+\section{Combining Boids with Control Barrier Function}
+\label{sec:combiningBoidsCBF}
+
+\section{Combining Boids with Artificial Potential Field}
+\label{sec:combiningBoidsAPF}
+
+\section{Hardware/Software}
+\label{sec:hardwareSoftware}
+
+The thesis was implemented in Unity 6 and the simulations were run on a windows based computer with AMD Ryzen 5 CPU and a Nvidia 1080ti GPU.
 
 \section{Assessing reliability and validity of the data collected}
 \label{sec:assessingReliability}
@@ -730,12 +742,14 @@ Another delimiation of the project will be that delays in signal processing will
 \subsection{Data Analysis Technique}
 \label{sec:dataAnalysisTechnique}
 
-\subsection{Software Tools}
-\label{sec:softwareTools}
+\section{Scenarios}
+\label{sec:scenarios}
 
+\section{Parameters}
+\label{sec:parameters}
 
-\section{Evaluation framework}
-\label{sec:evaluationFramework}
+\section{Evaluation}
+\label{sec:evaluation}
 
 %\section{System documentation}
 %\label{sec:systemDocumentation}
@@ -746,17 +760,17 @@ Another delimiation of the project will be that delays in signal processing will
 
 
 \cleardoublepage
-\chapter{What you did}%\engExpl{Choose your own chapter title to describe this}
-\label{ch:whatYouDid}
+%\chapter{What you did}%\engExpl{Choose your own chapter title to describe this}
+%\label{ch:whatYouDid}
 %\sweExpl{[Vad gjorde du? Hur gick det till? – Välj lämplig rubrik (“Genomförande”, “Konstruktion”, ”Utveckling”  eller annat]}
 %\engExpl{What have you done? How did you do it? What design decisions did you make? How did what you did help you to meet your goals?}
 
 
 % the following sets the TOC entry to break after the & - note you have to include the first letter of the following word as it get swolled by the \texorpdfstring{}{} processing
-\section[Hardware/Software design …/Model/Simulation model \&\texorpdfstring{\\}{ p} parameters/…]{Hardware/Software design …/Model/Simulation model \& parameters/…}
+%\section[Hardware/Software design …/Model/Simulation model \&\texorpdfstring{\\}{ p} parameters/…]{Hardware/Software design …/Model/Simulation model \& parameters/…}
 
-\section{Implementation …/Modeling/Simulation/…}
-\label{sec:implementationDetails}
+%\section{Implementation …/Modeling/Simulation/…}
+%\label{sec:implementationDetails}
 
 
 %\engExpl{This section is simply to show some example of how you can include code in your thesis - this is not a section you would have in your thesis.}
@@ -796,7 +810,7 @@ Another delimiation of the project will be that delays in signal processing will
 %\end{lstlisting}
 %\FloatBarrier
 
-\cleardoublepage
+%\cleardoublepage
 \chapter{Results and Analysis}
 \label{ch:resultsAndAnalysis}
 
