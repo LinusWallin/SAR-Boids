@@ -542,7 +542,7 @@ We would like to thank xxxx for having yyyy.
 \label{sec:hypothesis}
 The expected outcome of the study is that the target-seeking behavior will make the 3D boids explore less and focus more on moving toward the target, similarly to the results in the paper by Hengstebeck, et al.\cite{Hengstebeck2024}. This will likely lead to more boids reaching the target, but it will also increase the number of collisions during the simulation with increasing strength of the target-seeking behavior.
 
-The addition of a APF representing the search area will likely result in an outcome where fewer boids collide with obstacles and have a higher likelihood of reaching the target as they are guided by a HLP. This will slightly reduce the amount of exploration that the boids do, which would be something to have in mind if applied to a scenario with less prior information about the search area.
+The addition of an APF representing the search area will likely result in an outcome where fewer boids collide with obstacles and have a higher likelihood of reaching the target as they are guided by a HLP. This will slightly reduce the amount of exploration that the boids do, which would be something to have in mind if applied to a scenario with less prior information about the search area.
 
 % Research Question
 \subsection{Research Questions}
@@ -586,11 +586,11 @@ The purpose of the thesis is to provide insight into the potential of APF in com
 \section{Delimitations}
 %\generalExpl{Describe the boundary/limits of your thesis project and what you are explicitly not going to do. This will help you bound your efforts – as you have clearly defined what is out of the scope of this thesis project. Explain the delimitations. These are all the things that could affect the study if they were examined and included in the degree project.}
 
-Altough the goal is to provide valuable information about how well APF in combination with the boids algorithm could do in real collapsed building SAR scenarios, the focus of the project will not be to create realistic scenarios nor take into account for everything that could affect the agents in real life.
+Although the goal is to provide valuable information about how well APF in combination with the boids algorithm could do in real collapsed building SAR scenarios, the focus of the project will not be to create realistic scenarios nor take into account everything that could affect the agents in real life.
 
-One of the delimitations for the project will be that it will not take into account how the drone would have to adjust in real life to achieve the movement in the simulation. This could lead to the agents movement not being completely realistic.
+One of the delimitations for the project will be that it will not take into account how the drone would have to adjust in real life to achieve the movement in the simulation. This could lead to the agent's movement not being completely realistic.
 
-Another delimiation of the project will be that delays in signal processing will not be considered for both the communication between the different agents in the scene and the potential delays in the hardware of the real life drones. This should not make much of a difference, since the delays in todays drone hardware is quite low. %source?
+Another delimitation of the project will be that delays in signal processing will not be considered for both the communication between the different agents in the scene and the potential delays in the hardware of the real life drones. This should not make much of a difference, since the delays in today's drone hardware is quite low. %source?
 
 \section{Structure of the thesis}
 %Chapter~\ref{ch:background} presents relevant background information about xxx.  Chapter~\ref{ch:methods} presents the methodology and method used to solve the problem. …
@@ -858,15 +858,18 @@ The thesis was implemented in Unity 6 and the simulations were run on a windows 
 \section{Limitations}
 \label{sec:limitations}
 %\engExpl{What did you find that limited your efforts? What are the limitations of your results?}
+The aim of this study was to explore the benefit of using an artificial potential field to guide the boids algorithm in SAR scenarios. This is done by testing the algorithm on scenarios that represent challenges that the robots would face in real SAR environments, with the limitation that they are not a complete representation of real life. The reason for this limitation is that the algorithm's performance becomes lackluster when the scenario space is too cluttered with obstacles and other boids, leading to long computation times. This limited the size of the scenarios, the number of obstacles, and the number of boids.
+
+To combat the performance issues and allow for larger scenarios with more obstacles and boids, the separation ratio of obstacle boids was increased. Although this improved the performance of the algorithm, it could also impact the precision of the boids algorithm. 
 
 \section{Ethical Implications}
 \label{sec:ethicalImplications}
 
-Altough the goal with developing better SAR methods is to save more lives, there is a possibility it could be used to cause harm. With drones becoming popular in warfare, the likelihood of drone based SAR methods being used in unethical ways increases. One potential ethical implication would be that the SAR method is used to find and kill people in an active warzone, leading to loss of life in opposition to the goal of saving lives.
+Although the goal with developing better SAR methods is to save more lives, there is a possibility it could be used to cause harm. With drones becoming popular in warfare, the likelihood of drone based SAR methods being used in unethical ways increases. One potential ethical implication would be that the boids SAR method is used to find and kill people in an active warzone, leading to loss of life in opposition to the goal of saving lives.
 
-Using swarm robotics in these types of operations might be less useful since it requires multiple drones, making it easier for the targets to spot them and potentially shoot them down.
+Using swarm robotics in these types of operations might be less useful since it requires multiple drones, making it easier for the targets of a potential attack to spot them and take them down.
 
-Another potential use case for swarm robotics in warfare is finding injured soldiers on the battlefield to help the SAR teams on the ground save the soldiers life.
+There is also a possibility that the boids algorithm could be used to save lives in war. It could be used to find injured soldiers on the battlefield to help the SAR teams on the ground save the soldiers life.
 
 \section{Future work}
 \label{sec:futureWork}
@@ -874,17 +877,13 @@ Another potential use case for swarm robotics in warfare is finding injured sold
 %Consider: What you have left undone? What are the next obvious things to be done? What hints can you give to the next person who is going to follow up on your work?}
 
 %Multi-Agent Formation Control APF
-Evaluation is a key part of research, and it is important that there is a common way of evaluating implementations of multi-agent algorithms in SAR scenarios.
+Evaluation is a key part of research, and it is important that there is a common way of evaluating implementations of multi-agent algorithms in SAR scenarios. Although there are a set of standard values to evaluate multi-agent algorithms on, there exists no benchmarking for the algorithms in SAR scenarios. The closest to benchmarking SAR algorithms is RoboCup. It would be very useful to have standard scenarios to allow for easy implementation with different software. This would also make it easier to compare different multi-agent SAR algorithms with each other.
 
-Altough there are a set of standard values to evaluate multi-agent algorithms on, there are exists no benchmarking for the algorithms in SAR scenarios. The closest to benchmarking SAR algorithms is RoboCup.
+There exists a large number of multi-agent algorithms and this thesis does not cover many of them. To improve on the work of the thesis, a comparison between different multi-agent algorithms and the boids algorithms presented in this paper could be done. This would lead to a better understanding of whether the boids algorithm would be useful in real SAR scenarios.
 
-There exists a large number of multi-agent algorithms and this thesis does not cover many of them. To improve on the work of the thesis, a comparison between different multi-agent algorithms and the boids algorithms presented in this paper could be done. This would lead to a better understanding of whether the boids algorithms would be useful in real SAR scenarios.
+Another way to explore how good the boids algorithm would be in real life SAR scenarios would be by implementing the algorithm on a physical swarm of robots. This would give insight into their performance and viability in real life SAR scenarios compared to their performance in the virtual environments explored in this thesis.
 
-The boids algorithms in this thesis were only simulated in a virtual environment in the form of Unity and it would be of interest to implement the algorithms on a physical swarm of robots to give insight into their performance and viability in real life SAR scenarios.
-
-This thesis implements an artificial potential field as a HLP, but since there are multiple other HLPs that could be used to enhance the performance of the boids algorithm a possible extention to this thesis would be to compare different HLPs to find the best one.
-
-
+This thesis implements an artificial potential field as a HLP, but since there are multiple other HLPs that could be used to enhance the performance of the boids algorithm a possible extension to this thesis would be to compare different HLPs to find the best one.
 
 \cleardoublepage
 \chapter{Conclusions}
