@@ -75,6 +75,7 @@
 \bibliographystyle{bibstyle/myIEEEtran}
 %\bibliographystyle{apalike}
 
+\hbadness=10000
 
 % include a variety of packages that are useful
 \input{lib/includes}
@@ -448,8 +449,7 @@ swe
 %  Note: If you do \textbf{not} have the copyright owner’s permission, then you \textbf{cannot} use any copyrighted figures/tables/\ldots . Unless stated otherwise all figures/tables/\ldots are generally copyrighted.
 %}
 
-I would like to thank xxxx for having yyyy. Or in the case of two authors:\\
-We would like to thank xxxx for having yyyy.
+%I would like to thank xxxx for having yyyy.
 
 \acknowlegmentssignature
 
@@ -535,17 +535,27 @@ We would like to thank xxxx for having yyyy.
 
 %The high level objective of the degree project is to contribute to the field of SAR by presenting an improvement of the methods that currently used find targets in collapsed building scenarios. The goal is to increase the efficiency of the rescuers by giving them the tools which would allow them to scout a larger area faster than they could without the tools.
 
-\section{Problem Defenition}
+\section{Problem Definition}
 \label{sec:problemDescription}
 
-\subsection{Hypothesis}
-\label{sec:hypothesis}
+%Insert problem definition
+Natural catastrophes can cause a lot of destruction to cities and the 
+
+%\subsection{Research Methodology}
+%\label{sec:researchMethodology}
+%\generalExpl{Introduce your choice of methodology/methodologies and method/methods – and the reason why you chose them. Contrast them with and explain why you did not choose other methodologies or methods. (The details of the actual methodology and method you have chosen will be given in Chapter~\ref{ch:methods}. Note that in Chapter~\ref{ch:methods}, the focus could be research strategies, data collection, data analysis, and quality assurance.)\\
+%In this section you should present your philosophical assumption(s), research method(s), and research approach(es).}
+
+The research will have a quantative approach, where the different algorithms will be compared to each other in simulations on various SAR scenario environments.
+
+%\subsection{Hypothesis}
+%\label{sec:hypothesis}
 The expected outcome of the study is that the target-seeking behavior will make the 3D boids explore less and focus more on moving toward the target, similarly to the results in the paper by Hengstebeck, et al.\cite{Hengstebeck2024}. This will likely lead to more boids reaching the target, but it will also increase the number of collisions during the simulation with increasing strength of the target-seeking behavior.
 
 The addition of an APF representing the search area will likely result in an outcome where fewer boids collide with obstacles and have a higher likelihood of reaching the target as they are guided by a HLP. This will slightly reduce the amount of exploration that the boids do, which would be something to have in mind if applied to a scenario with less prior information about the search area.
 
 % Research Question
-\subsection{Research Questions}
+\section{Research Questions}
 \label{sec:researchQuestion}
 
 %This thesis explores the possible benefits of guiding boids with a APF representing the scenario environment. It also explores the importance of CBF and how it affects the boids algorithm in combination with the APF.
@@ -553,22 +563,29 @@ The hypothesis is tested by comparing the boids algorithm with the different com
 
 The study is exploring a core research question which then is divided into three sub-questions. The core research question of the thesis is defined as:\\
 
-\textit{Does the addition of a HLP in the form of an artificial potential field improve the boids algorithm in SAR simulation scenarios.}\\
+\textit{Does the addition of a HLP in the form of an artificial potential field improve the boids algorithm in simulated SAR scenarios.}\\%should I use acronyms in the RQ:s?
 
-\textit{\textbf{RQ1:} How does target-seeking and CBF affect the 3D boids algorithm in terms of coverage, safety, and number of boids that are able to find the target location?}\cite{Hengstebeck2024}\\
+The thesis aims to add to the SAR research field by exploring boids aided by an APF HLP taking inspiration from the future work on boids in SAR suggested by Hengstebeck et al.\cite{Hengstebeck2024}.
 
-\textit{\textbf{RQ2:} How does adding a CBF to the boids algorithm affect the 3D boids algorithm in terms of coverage, safety, and number of boids that are able to find the target location?}\cite{Hengstebeck2024}\\
+\textit{\textbf{RQ1:} How does target-seeking affect the 3D boids algorithm in terms of coverage, safety, and number of boids that are able to find the target location?}
 
-\textit{\textbf{RQ3:} How does adding a high level planner in the form of an artificial potential field affect the 3D boids algorithm in terms of coverage, safety, and number of boids that are able to find the target?}\cite{Hengstebeck2024}\cite{APF}
+\cite{Hengstebeck2024}\\
+
+Analysis and discussion about RQ1 can be found in section \ref{sec:rq1}.
+
+\textit{\textbf{RQ2:} How does adding a CBF to the boids algorithm affect the 3D boids algorithm in terms of coverage, safety, and number of boids that are able to find the target location?}
+
+\cite{Hengstebeck2024}\\
+
+Analysis and discussion about RQ1 can be found in section \ref{sec:rq2}.
+
+\textit{\textbf{RQ3:} How does adding a high level planner in the form of an artificial potential field affect the 3D boids algorithm in terms of coverage, safety, and number of boids that are able to find the target?}
+
+\cite{Hengstebeck2024}\cite{APF}\\
+
+Analysis and discussion about RQ1 can be found in section \ref{sec:rq3}.
 
 %Do I need all these RQS or is RQ2 redundant? Should I also have a RQ that compares APF with CBF to APF without CBF?
-
-\subsection{Research Methodology}
-\label{sec:researchMethodology}
-%\generalExpl{Introduce your choice of methodology/methodologies and method/methods – and the reason why you chose them. Contrast them with and explain why you did not choose other methodologies or methods. (The details of the actual methodology and method you have chosen will be given in Chapter~\ref{ch:methods}. Note that in Chapter~\ref{ch:methods}, the focus could be research strategies, data collection, data analysis, and quality assurance.)\\
-%In this section you should present your philosophical assumption(s), research method(s), and research approach(es).}
-
-The research will have a quantative approach, where the different algorithms will be compared to each other in simulations on various SAR scenario environments.
 
 %\subsection{Scientific and engineering issues}
 
@@ -576,7 +593,7 @@ The research will have a quantative approach, where the different algorithms wil
 %\generalExpl{State the purpose of your thesis and the purpose of your degree project.\\
 %Describe who benefits and how they benefit if you achieve your goals. Include anticipated ethical, sustainability, social issues, etc. related to your project. (Return to these in your reflections in Section~\ref{sec:reflections}.)}
 
-The purpose of the thesis is to provide insight into the potential of APF in combination with the \textit{boids algorithm} to find missing people in SAR scenarios with collapsed buildings. 
+The purpose of the thesis is to provide insight into the potential of APF in combination with the boids algorithm to find missing people in SAR scenarios with collapsed buildings. 
 
 %\section{Goals}
 %\generalExpl{State the goal/goals of this degree project.}
@@ -701,20 +718,20 @@ Another delimitation of the project will be that delays in signal processing wil
 %\subsection{Test environment/test bed/model}
 %\engExpl{Describe everything that someone else would need to reproduce your test environment/test bed/model/… .}
 
-\section{Implementing Boids}
-\label{sec:implmeentingBoids}
+\section{Boids}
+\label{sec:boids}
 
-\section{Implementing Control Barrier Function}
-\label{sec:implementingCBF}
+\section{Control Barrier Function}
+\label{sec:CBF}
 
-\section{Implementing Artificial Potential Field}
-\label{sec:implementingAPF}
+\section{Artificial Potential Field}
+\label{sec:APF}
 
-\section{Combining Boids with Control Barrier Function}
-\label{sec:combiningBoidsCBF}
+\section{Boids with Control Barrier Function}
+\label{sec:boidsCBF}
 
-\section{Combining Boids with Artificial Potential Field}
-\label{sec:combiningBoidsAPF}
+\section{Boids with Artificial Potential Field}
+\label{sec:boidsAPF}
 
 \section{Hardware/Software}
 \label{sec:hardwareSoftware}
@@ -843,13 +860,13 @@ The thesis was implemented in Unity 6 and the simulations were run on a windows 
 \label{ch:discussion}
 %\generalExpl{This can be a separate chapter or a section in the previous chapter.}
 
-\section{RQ1}
+\section{RQ1: Target-seeking}
 \label{sec:rq1}
 
-\section{RQ2}
+\section{RQ2: Control Barrier Function}
 \label{sec:rq2}
 
-\section{RQ3}
+\section{RQ3: Artificial Potential Field as High Level Planner}
 \label{sec:rq3}
 
 \section{General Research Question}
