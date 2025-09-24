@@ -56,5 +56,9 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "SAR-Boids.sln"
+    "dotnet.defaultSolution": "SAR-Boids.sln",
+    "cSpell.words": [
+        "boids",
+        "Hengstebeck"
+    ]
 }
