@@ -364,15 +364,9 @@ eng
 %%% These page(s) will be removed before the thesis is inserted into DiVA.
 
 \begin{scontents}[store-env=abstracts,print-env=true]
-%Write an abstract that is about 250 and 350 words (1/2 A4-page)  with the following components:
-% key parts of the abstract
-%\begin{itemize}
-%  \item What is the topic area? (optional) Introduces the subject area for the project.
-%  \item Short problem statement
-%  \item Why was this problem worth a Bachelor's/Master’s thesis project? (\ie, why is the problem both significant and of a suitable degree of difficulty for a Bachelor's/Master’s thesis project? Why has no one else solved it yet?)
-%  \item How did you solve the problem? What was your method/insight?
-%  \item Results/Conclusions/Consequences/Impact: What are your key results/\linebreak[4]conclusions? What will others do based on your results? What can be done now that you have finished - that could not be done before your thesis project was completed?
-%\end{itemize}
+%1) General intro, problem, significance, 
+%2) Method, including implementation and evaluation details, 
+%3) Most important results, link back to significance in 1).
 
 Search and Rescue (SAR) teams are a key part of finding missing people in the event of a natural catastrophe. To increase the likelihood of finding the missing people in SAR scenarios and reduce the time to do so, autonomous or teleoperated robots and multi-robot systems have become a key tool in aiding the SAR teams. The robots can help SAR teams map the area, monitor, or search for the victims in multiple different types of SAR scenarios. A common factor for the SAR scenarios is that time is of the essence, since the missing person might be in a critical health state. To increase the likelihood of finding the missing person in time, drones can be used by the SAR team. The issue with having a SAR team controlling the drone/drones is that only one drone can be controlled by one person. With swarm robotics it is instead possible for SAR teams to use a large amount of drones. This allows for covering larger areas and increasing the chances of finding the missing people faster.
 
@@ -549,13 +543,9 @@ The analysis and discussion of RQ1 can be found in Section~\ref{sec:rq1}.\\
 
 \textit{\textbf{RQ2:} How does adding a high-level planner in the form of an artificial potential field affect the 3D boids algorithm in terms of coverage, safety, and number of boids that are able to find the target?}\\
 
-To see if it is possible to improve the performance of the boids algorithm further Hengstebeck et al.~\cite{Hengstebeck2024} suggested the addition of a HLP to solve the issue of agents becoming stuck by obstacles in the simulation. 
+APFs can be used to guide agents through an environment with obstacles and find the shortest path to the given goal \cite{APF}. 
 
 This research question aims to explore the possibility of using a APF as a HLP to reduce the risk of agents becoming stuck by obstacles.
-
-\cite{APF}
-
-\cite{HLP}
 
 The analysis and discussion of RQ2 can be found in Section~\ref{sec:rq2}.\\
 
@@ -676,6 +666,8 @@ This thesis does also not take into account the processing power of the drones a
 
 \section{Overview}
 \label{sec:overview}
+
+\includegraphics[scale=0.4]{Images/OverviewFlowchart.png}
 
 %\section{Research Paradigm}
 %\label{sec:researchParadigm}
