@@ -744,27 +744,33 @@ The thesis was implemented in Unity 6 and the simulations were run on a Windows 
 \section{Evaluation}
 \label{sec:evaluation}
 
-%\section{System documentation}
-%\label{sec:systemDocumentation}
-%\sweExpl{Systemdokumentation\\
-%Med vilka dokument och hur skall en konstruerad prototyp dokumenteras? Detta blir ofta bilagor till rapporten och det som problemägaren till det ursprungliga problemet (industrin) ofta vill ha.\\
-%Bland dessa bilagor återfinns ofta, och enligt någon angiven standard, kravdokument, arkitekturdokument, designdokumnet, implementationsdokument, driftsdokument, testprotokoll mm.}
-%\generalExpl{If this is going to be a complete document consider putting it in as an appendix, then just put the highlights here.}
+There exists simulation tools for performance evaluation of multi-agent systems, such as, RoboCup rescue simulation project~\cite{RoboCupOrigin}\cite{RoboCupRescue} and USARSim~\cite{USARSimOrigin}. These simulation tools are used for ground-based rescue robotics and human robot interactions. When it comes to aerial robotics there exists less standardized ways for evaluating the methods.
 
+What is common for the evaluation of multi-agent systems in SAR scearios is to evalute them on complex scenario spaces with multiple obstacles and challenging environment layouts. The environments tend to represent realistic scenarios.
+This thesis intends to do the evaluation in a similair manner and use complex scenario spaces with multiple obstacles trying to acheive somewhat realistic scenarios.
+
+When it comes to evaluating robotic systems there exists standardized evaluation metrics which should be used to get a good understanding of the performance of the robotic system which is tested. A key aspect for evaluating robotic systems and seeing if they execute their intended function is to consider the task performance and efficieny of the robotic systems. 
+
+Another evaluation metric related to roboic systems is relaibaility and safety which are important metrics to consider for robotic systems that are deployed into hazardous environments, shared spaces with humans, and mission critical scenarios. All of these fit the USAR scenarios and the safety metric is a significant part of the performance of the algorithms. 
+
+\cite{EvaluationMetrics} % Paper for evaluation metrics in SAR Robotics
+
+To evaluate the boids algorithms performance in the created scenarios the metrics Time to Reach Target, Number of Collisions, and Scenario Space Coverage will be used.
+
+\subsection{Time to Reach Target}
+\label{sec:ttRT}
+The Time to Reach Target metric is defined as the average time it takes a boid to reach the target. This does not count boids that never reach the target.%Change later?
+
+\subsection{Number of Collisions} %Change metric name to Saftey and descirbe what it means here?
+\label{sec:nCollisions}
+The Number of Collisions metric tracks how many boids collide in the simulation causing them not to find the target in the SAR simulation. Since the boids are removed when they collide with something in the scenario space, collisions have a large impact on the boids algorithms performance. A larger number of collisions will lead to less boids searching for the target and covering less of the scenario space.
+
+\subsection{Scenario Space Coverage}
+\label{sec:coverage}
+To evaluate how explorative the boids algorithms are the Scenario Space Coverege metric is used. This metric describes the percentage of the scenario space which has been explored by the boids algorithms at the end of the simulation.
 
 \cleardoublepage
-%\chapter{What you did}%\engExpl{Choose your own chapter title to describe this}
-%\engExpl{What have you done? How did you do it? What design decisions did you make? How did what you did help you to meet your goals?}
-
-
-% the following sets the TOC entry to break after the & - note you have to include the first letter of the following word as it get swolled by the \texorpdfstring{}{} processing
-%\section[Hardware/Software design …/Model/Simulation model \&\texorpdfstring{\\}{ p} parameters/…]{Hardware/Software design …/Model/Simulation model \& parameters/…}
-
-%\section{Implementation …/Modeling/Simulation/…}
-%\label{sec:implementationDetails}
-
-%Listing~\ref{lst:helloWorldInC} shows an example of a simple program written
-%in C code.
+%Listing~\ref{lst:helloWorldInC} shows an example of a simple program written in C code.
 
 %\begin{lstlisting}[language={C}, caption={Hello world in C code}, label=lst:helloWorldInC]
 %int main() {
@@ -773,20 +779,15 @@ The thesis was implemented in Unity 6 and the simulations were run on a Windows 
 %}
 %\end{lstlisting}
 
-%\cleardoublepage
 \chapter{Results and Analysis}
 \label{ch:resultsAndAnalysis}
 
 %\engExpl{Sometimes this is split into two chapters.\\Keep in mind: How you are going to evaluate what you have done? What are your metrics?\\Analysis of your data and proposed solution\\Does this meet the goals which you had when you started?}
 
-%In this chapter, we present the results and discuss them.
-
-
 \section{Major results}
 
 %Some statistics of the delay measurements are shown in Table~\ref{tab:delayMeasurements}.
 %The delay has been computed from the time the GET request is received until the response is sent.
-
 
 \section{Reliability Analysis}
 
@@ -828,7 +829,7 @@ There is also a possibility that the boids algorithm could be used to save lives
 %Consider: What you have left undone? What are the next obvious things to be done? What hints can you give to the next person who is going to follow up on your work?}
 
 %Multi-Agent Formation Control APF
-Evaluation is a key part of research, and it is important that there is a common way of evaluating implementations of multi-agent algorithms in SAR scenarios. Although there are a set of standard values to evaluate multi-agent algorithms on, there exists no benchmarking for the algorithms in SAR scenarios. The closest to benchmarking SAR algorithms is RoboCup. It would be very useful to have standard scenarios to allow for easy implementation with different software. This would also make it easier to compare different multi-agent SAR algorithms with each other.
+Evaluation is a key part of research, and it is important that there is a common way of evaluating implementations of multi-agent algorithms in SAR scenarios. Although there are a set of standard values to evaluate multi-agent algorithms on, there exists no general benchmarking for the algorithms in SAR scenarios. The closest to benchmarking SAR algorithms is RoboCup. It would be very useful to have standard scenarios to allow for easy implementation with different software. This would also make it easier to compare the results from different multi-agent SAR algorithms with each other.
 
 There exists a large number of multi-agent algorithms and this thesis does not cover many of them. To improve on the work of the thesis, a comparison between different multi-agent algorithms and the boids algorithms presented in this paper could be done. This would lead to a better understanding of whether the boids algorithm would be useful in real SAR scenarios.
 
