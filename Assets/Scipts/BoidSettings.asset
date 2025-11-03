@@ -39,3 +39,4 @@ MonoBehaviour:
   obstacleInfluence: 1000
   kAtt: 1
   kRep: 100
+  goalRadius: 20

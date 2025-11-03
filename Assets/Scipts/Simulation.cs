@@ -26,6 +26,7 @@ public class Simulation : MonoBehaviour
     Boid[] boids;
     Boid[] aliveBoids;
     Boid[] boidCMs;
+    Boid[] boidsAtTarget;
     Vector3 gridStart;
     Vector3 cellSize;
 
@@ -111,6 +112,8 @@ public class Simulation : MonoBehaviour
         {
             boids[boidSettings.numBoids + numGhosts + k] = arrayIDM[k];
         }
+
+        boidsAtTarget = new Boid[boidSettings.numBoids];
 
     }
 
@@ -491,114 +494,159 @@ public class Simulation : MonoBehaviour
     {
         if (boids != null)
         {
-            double timeMs = 0.0;
-            var boidData = new BoidData[boids.Length];
-
-            for (int i = 0; i < boids.Length; i++)
+            if (AllReachedTarget())
             {
-                if (boids[i] != null)
+                Debug.Log("TESTING");
+            }
+            else
+            {
+                double timeMs = 0.0;
+                var boidData = new BoidData[boids.Length];
+
+                for (int i = 0; i < boids.Length; i++)
                 {
-                    boidData[i].position = boids[i].position;
-                    boidData[i].direction = boids[i].direction;
-                    if (boids[i].isAlive)
+                    if (boids[i] != null)
                     {
-                        boidData[i].isAlive = 1;
-                    }
-                    else
-                    {
-                        boidData[i].isAlive = 0;
+                        boidData[i].position = boids[i].position;
+                        boidData[i].direction = boids[i].direction;
+                        if (boids[i].isAlive)
+                        {
+                            boidData[i].isAlive = 1;
+                        }
+                        else
+                        {
+                            boidData[i].isAlive = 0;
+                        }
+                        if (boids[i].isGoal)
+                        {
+                            boidData[i].goalReached = 1;
+                        }
+                        else
+                        {
+                            boidData[i].goalReached = 0;
+                        }
                     }
                 }
-            }
 
-            var boidBuffer = new ComputeBuffer(boids.Length, BoidData.Size);
-            boidBuffer.SetData(boidData);
+                var boidBuffer = new ComputeBuffer(boids.Length, BoidData.Size);
+                boidBuffer.SetData(boidData);
 
-            var neighborData = new NeighborData[totalMaxNeighbors];
-            var neighborBuffer = new ComputeBuffer(
-                totalMaxNeighbors,
-                NeighborData.Size
-            );
-            neighborBuffer.SetData(neighborData);
+                var neighborData = new NeighborData[totalMaxNeighbors];
+                var neighborBuffer = new ComputeBuffer(
+                    totalMaxNeighbors,
+                    NeighborData.Size
+                );
+                neighborBuffer.SetData(neighborData);
 
-            var fieldBuffer = new ComputeBuffer(potentialField.Length, sizeof(float) * 3);
-            fieldBuffer.SetData(potentialField);
+                var fieldBuffer = new ComputeBuffer(potentialField.Length, sizeof(float) * 3);
+                fieldBuffer.SetData(potentialField);
 
-            compute.SetBuffer(0, "boids", boidBuffer);
-            compute.SetBuffer(0, "neighbors", neighborBuffer);
-            compute.SetBuffer(0, "potentialField", fieldBuffer);
-            compute.SetInt("numBoids", boids.Length);
-            compute.SetInt("maxNeighbors", maxNeighbors);
-            compute.SetFloat("neighborMaxDist", boidSettings.neighborMaxDist);
-            compute.SetFloat("desiredDist", boidSettings.desiredDist);
-            compute.SetInt("isField", boidSettings.potentialField ? 1 : 0);
-            compute.SetInts(
-                "gridSize",
-                (int)boidSettings.gridSize.x,
-                (int)boidSettings.gridSize.y,
-                (int)boidSettings.gridSize.z
-            );
-            compute.SetFloats(
-                "cellSize",
-                boidSettings.cellRadius * 2,
-                boidSettings.cellRadius * 2,
-                boidSettings.cellRadius * 2
-            );
-            compute.SetFloats(
-                "gridStart",
-                gridStart.x,
-                gridStart.y,
-                gridStart.z
-            );
+                //Set compute shader variables
+                compute.SetBuffer(0, "boids", boidBuffer);
+                compute.SetBuffer(0, "neighbors", neighborBuffer);
+                compute.SetBuffer(0, "potentialField", fieldBuffer);
+                compute.SetInt("numBoids", boids.Length);
+                compute.SetInt("maxNeighbors", maxNeighbors);
+                compute.SetFloat("neighborMaxDist", boidSettings.neighborMaxDist);
+                compute.SetFloat("desiredDist", boidSettings.desiredDist);
+                compute.SetFloat("goalRadius", boidSettings.goalRadius);
+                compute.SetInt("isField", boidSettings.potentialField ? 1 : 0);
+                compute.SetInts(
+                    "gridSize",
+                    (int)boidSettings.gridSize.x,
+                    (int)boidSettings.gridSize.y,
+                    (int)boidSettings.gridSize.z
+                );
+                compute.SetFloats(
+                    "cellSize",
+                    boidSettings.cellRadius * 2,
+                    boidSettings.cellRadius * 2,
+                    boidSettings.cellRadius * 2
+                );
+                compute.SetFloats(
+                    "gridStart",
+                    gridStart.x,
+                    gridStart.y,
+                    gridStart.z
+                );
+                compute.SetFloats(
+                    "targetPos",
+                    target.transform.position.x,
+                    target.transform.position.y,
+                    target.transform.position.z
+                );
 
-            int threadGroups = Mathf.CeilToInt(boidSettings.numBoids / (float)threadGroupSize);
-            compute.Dispatch(0, threadGroups, 1, 1);
+                int threadGroups = Mathf.CeilToInt(boidSettings.numBoids / (float)threadGroupSize);
+                compute.Dispatch(0, threadGroups, 1, 1);
 
-            boidBuffer.GetData(boidData);
-            neighborBuffer.GetData(neighborData);
+                boidBuffer.GetData(boidData);
+                neighborBuffer.GetData(neighborData);
 
-            for (int i = 0; i < boids.Length; i++)
-            {
-                if (boids[i] != null && boids[i].isAlive)
+                for (int i = 0; i < boidSettings.numBoids; i++)
                 {
-                    boids[i].flockCenter = boidData[i].flockCenter;
-                    boids[i].numFlockmates = boidData[i].numFlockmates;
-                    boids[i].alignmentForce = boidData[i].flockDirection;
-                    /*Debug.Log("alignment: " + boids[i].alignmentForce);
-                    Vector3 p = boids[i].position;
-                    Vector3 pp = new Vector3(
-                            Mathf.Floor((p.x - gridStart.x) / cellSize.x),
-                            Mathf.Floor((p.y - gridStart.y) / cellSize.y),
-                            Mathf.Floor((p.z - gridStart.z) / cellSize.z)
-                        );
-                    int coordinateIdx = (int)pp.x + (int)pp.y * (int)boidSettings.gridSize.x + (int)pp.z * (int)boidSettings.gridSize.x * (int)boidSettings.gridSize.y;
-                    Vector3 f = potentialField[coordinateIdx];
-                    Debug.Log("ACTUAL FORCE: " + f);
-                    Debug.Log("real: " + boidData[i].gIndex + " ; " + " pot: " + coordinateIdx);
-                    Debug.Log(boidData[i].position + " ; " + boids[i].position);
-                    Debug.DrawLine(boids[i].position, boids[i].position + f, Color.yellow);*/
-                    boids[i].separationForce = boidData[i].separationDirection.normalized;
-                    boids[i].neighborPos.Clear();
-
-                    int startIdx = i * maxNeighbors;
-                    for (int j = 0; j < boids[i].numFlockmates; j++)
+                    if (boids[i] != null)
                     {
-                        boids[i].neighborPos.Add(neighborData[startIdx + j].position);
+                        if (boids[i].isAlive)
+                        {
+                            if (boidData[i].goalReached == 1)
+                            {
+                                boids[i].isGoal = true;
+                                boids[i].isAlive = false;
+                                boids[i].speed = 0;
+                            }
+                            else
+                            {
+                                boids[i].flockCenter = boidData[i].flockCenter;
+                                boids[i].numFlockmates = boidData[i].numFlockmates;
+                                boids[i].alignmentForce = boidData[i].flockDirection;
+                                boids[i].separationForce = boidData[i].separationDirection.normalized;
+                                boids[i].neighborPos.Clear();
+
+                                int startIdx = i * maxNeighbors;
+                                for (int j = 0; j < boids[i].numFlockmates; j++)
+                                {
+                                    boids[i].neighborPos.Add(neighborData[startIdx + j].position);
+                                }
+
+                                boids[i].UpdateBoid();
+                                timeMs += boids[i].osqpTime;
+                            }
+                        }
+                        else if (boidsAtTarget[i] == null)
+                        {
+                            boidsAtTarget[i] = boids[i];
+                        }
                     }
-
-                    boids[i].UpdateBoid();
-                    timeMs += boids[i].osqpTime;
                 }
-            }
-            if (boidSettings.isCBF)
-            {
-                Debug.Log($"OSQP took: {timeMs}ms");
-            }
 
-            boidBuffer.Release();
-            neighborBuffer.Release();
-            fieldBuffer.Release();
+                if (boidSettings.isCBF)
+                {
+                    Debug.Log($"OSQP took: {timeMs}ms");
+                }
+
+                //release the compute shader buffers
+                boidBuffer.Release();
+                neighborBuffer.Release();
+                fieldBuffer.Release();
+            }
+            
         }
+    }
+
+    /// <summary>
+    /// Checks if all boids have reached the target
+    /// </summary>
+    /// <returns></returns>
+    private bool AllReachedTarget()
+    {
+        for (int b = 0; b < boidSettings.numBoids; b++)
+        {
+            if (boidsAtTarget[b] == null)
+            {
+                return false;
+            }
+        }
+        return true;
     }
 
     public struct FaceData
@@ -629,7 +677,7 @@ public class Simulation : MonoBehaviour
         public Vector3 separationDirection;
         public int numFlockmates;
         public int isAlive;
-        public int gIndex;
+        public int goalReached;
 
         public static int Size
         {

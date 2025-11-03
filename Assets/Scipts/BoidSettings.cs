@@ -39,4 +39,5 @@ public class BoidSettings : ScriptableObject
     public float obstacleInfluence;
     public float kAtt;
     public float kRep;
+    public float goalRadius;
 }
