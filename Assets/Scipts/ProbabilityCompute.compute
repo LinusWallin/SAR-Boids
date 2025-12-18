@@ -1,18 +1,33 @@
 #pragma kernel CSProbabilityMain
+#pragma kernel CSPotentialPathMain
 
 StructuredBuffer<uint> obstaclePos;
+StructuredBuffer<float3> startPosBuffer;
+RWStructuredBuffer<uint> pathStepsBuffer;
 RWStructuredBuffer<float3> probGrid;
+RWStructuredBuffer<float3> pathBuffer;
 
 int xMax;
 int yMax;
 int zMax;
 int numObs;
+uint numAgents;
+uint maxSteps;
 float dIO; //distance of influence for obstacles
 float kAttractive;
 float kRepulsive;
+float minGradient;
+float cellStepSize;
+float minGoalDistance;
 float3 cellSize;
 float3 gridStart;
 float3 qGoal;
+
+uint CoordToIndex(float3 coord) {
+    uint3 local = round((coord - gridStart) / cellSize);
+    uint coordIndex = local.x + local.y * xMax + local.z * xMax * yMax;
+    return coordIndex;
+}
 
 float3 IndexToCoordinate(uint cellIndex) {
     uint x = cellIndex % xMax;
@@ -24,6 +39,7 @@ float3 IndexToCoordinate(uint cellIndex) {
 [numthreads(1024, 1, 1)]
 void CSProbabilityMain (uint3 id : SV_DispatchThreadID) {
     uint cellIndex = id.x;
+    if (cellIndex >= (xMax * yMax * zMax)) return;
     float3 currentPos = IndexToCoordinate(cellIndex);
 
     //Calculate the force of the potential field at the current
@@ -44,4 +60,64 @@ void CSProbabilityMain (uint3 id : SV_DispatchThreadID) {
     }
     float3 totalForce = attractiveForce + repulsiveForce;
     probGrid[cellIndex] = totalForce;
+}
+
+[numthreads(64, 1, 1)]
+void CSPotentialPathMain (uint3 id : SV_DispatchThreadID) {
+    uint agent = id.x;
+    if (agent >= numAgents) return;
+
+    uint currentPos = CoordToIndex(startPosBuffer[agent]);
+    uint basePathIndex = agent * maxSteps;
+
+    uint steps = 0;
+
+    for (uint i = 0; i < maxSteps; i++)
+    {
+        float3 currentCoordPos = IndexToCoordinate(currentPos);
+
+        if (distance(currentCoordPos, qGoal) < minGoalDistance)
+        {
+            break;
+        }
+
+        pathBuffer[basePathIndex + i] = currentCoordPos;
+        steps++;
+
+        float3 F = probGrid[currentPos];
+        float mag = length(F);
+
+        if (mag < minGradient)
+        {
+            float3 repulsiveForce = 0;
+            for (uint i = 0; i < numObs; i++) {
+                float3 qObs = IndexToCoordinate(obstaclePos[i]);
+                float dQI = distance(currentCoordPos, qObs);
+                if (dQI < dIO && dQI > 0.0001) {
+                    repulsiveForce += (
+                        kRepulsive * ((currentCoordPos - qObs) / dQI)
+                        * (pow((1 / dQI), 2) - pow((1 / dIO), 2))
+                    );
+                }
+            }
+            probGrid[currentPos] += repulsiveForce;
+            F = probGrid[currentPos];
+        }
+
+        float3 dir = normalize(F);
+        float3 nextPos = IndexToCoordinate(currentPos);
+
+        nextPos += float3(
+            ceil(dir.x * cellStepSize),
+            ceil(dir.y * cellStepSize),
+            ceil(dir.z * cellStepSize)
+        );
+
+        uint next = CoordToIndex(nextPos);
+
+        currentPos = next;
+    }
+
+    pathStepsBuffer[agent] = steps;
+
 }

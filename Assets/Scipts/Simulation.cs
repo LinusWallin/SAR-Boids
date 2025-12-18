@@ -33,21 +33,10 @@ public class Simulation : MonoBehaviour
     void Start()
     {
         gridStart = GetGridStart();
+        
+        SpawnBoids();
+
         probDist = gameObject.AddComponent<ProbabilityDist>();
-        probDist.Init(
-            obstacleMask,
-            gridStart,
-            boidSettings.gridSize,
-            new Vector3(
-                boidSettings.cellRadius * 2,
-                boidSettings.cellRadius * 2,
-                boidSettings.cellRadius * 2
-            ),
-            target.transform.position,
-            potentialCompute,
-            boidSettings
-        );
-        potentialField = probDist.GetProbGrid();
 
         cellSize = new Vector3(
                 boidSettings.cellRadius * 2,
@@ -55,7 +44,21 @@ public class Simulation : MonoBehaviour
                 boidSettings.cellRadius * 2
             );
 
-        SpawnBoids();
+        probDist.Init(
+            obstacleMask,
+            gridStart,
+            boidSettings.gridSize,
+            cellSize,
+            target.transform.position,
+            aliveBoids.Select(b => b.position).ToArray(),
+            potentialCompute,
+            boidSettings
+        );
+        potentialField = probDist.GetProbGrid();
+
+        //spawnboids
+
+        Debug.Log(probDist.GetPGDPath()[0][100]);
 
         List<Boid[]> boidList = new List<Boid[]>();
         int numGhosts = 0;
