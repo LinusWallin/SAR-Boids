@@ -121,10 +121,6 @@ public class Boid : MonoBehaviour
                 numFlockmates * boidSettings.leaderInfluence
             );
         }
-        if (alignmentForce != new Vector3(0, 0, 0))
-        {
-            Debug.DrawLine(position, position + alignmentForce, Color.green);
-        }
         int totalFlock = numFlockmates + (isLeader ? 1 : 0);
         Vector3 normalizedAlignment = (
             alignmentForce /
