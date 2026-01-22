@@ -180,12 +180,17 @@ public class ProbabilityDist : MonoBehaviour
         for (int i = 0; i < boidSettings.numBoids; i++) {
             int s = i * boidSettings.maxSteps;
             paths[i] = new List<Vector3>();
+            Debug.Log($"Path for agent {pathStepsData[i]}:");
             for (int j = 0; j < pathStepsData[i]; j++) {
                 paths[i].Add(pathData[s + j]);
                 Debug.Log(pathData[s + j]);
             }
         }
         return paths;
+    }
+
+    public int[] GetPathStepsData() {
+        return pathStepsData;
     }
 
 }

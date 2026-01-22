@@ -7,10 +7,10 @@ RWStructuredBuffer<uint> pathStepsBuffer;
 RWStructuredBuffer<float3> probGrid;
 RWStructuredBuffer<float3> pathBuffer;
 
-int xMax;
-int yMax;
-int zMax;
-int numObs;
+uint xMax;
+uint yMax;
+uint zMax;
+uint numObs;
 uint numAgents;
 uint maxSteps;
 float dIO; //distance of influence for obstacles
@@ -23,17 +23,41 @@ float3 cellSize;
 float3 gridStart;
 float3 qGoal;
 
+static const int3 neighborOffsets[26] = {
+    int3(-1,-1,-1), int3(0,-1,-1), int3(1,-1,-1),
+    int3(-1, 0,-1), int3(0, 0,-1), int3(1, 0,-1),
+    int3(-1, 1,-1), int3(0, 1,-1), int3(1, 1,-1),
+
+    int3(-1,-1, 0), int3(0,-1, 0), int3(1,-1, 0),
+    int3(-1, 0, 0),                 int3(1, 0, 0),
+    int3(-1, 1, 0), int3(0, 1, 0), int3(1, 1, 0),
+
+    int3(-1,-1, 1), int3(0,-1, 1), int3(1,-1, 1),
+    int3(-1, 0, 1), int3(0, 0, 1), int3(1, 0, 1),
+    int3(-1, 1, 1), int3(0, 1, 1), int3(1, 1, 1)
+};
+
+uint3 GetGridPos(uint cellIndex) {
+    uint3 g;
+    g.x = cellIndex % xMax;
+    g.y = (cellIndex / xMax) % yMax;
+    g.z = cellIndex / (xMax * yMax);
+    return g;
+}
+
+uint GetGridIndex(uint3 gridPos) {
+    return gridPos.x + gridPos.y * xMax + gridPos.z * xMax * yMax;
+}
+
 uint CoordToIndex(float3 coord) {
-    uint3 local = round((coord - gridStart) / cellSize);
+    uint3 local = (uint3)floor((coord - gridStart) / cellSize);
     uint coordIndex = local.x + local.y * xMax + local.z * xMax * yMax;
     return coordIndex;
 }
 
 float3 IndexToCoordinate(uint cellIndex) {
-    uint x = cellIndex % xMax;
-    uint y = (cellIndex / xMax) % yMax;
-    uint z = cellIndex / (xMax * yMax);
-    return gridStart + float3(x, y, z) * cellSize;
+    uint3 g = GetGridPos(cellIndex);
+    return gridStart + float3(g.x, g.y, g.z) * cellSize;
 }
 
 [numthreads(1024, 1, 1)]
@@ -87,7 +111,7 @@ void CSPotentialPathMain (uint3 id : SV_DispatchThreadID) {
         float3 F = probGrid[currentPos];
         float mag = length(F);
 
-        if (mag < minGradient)
+        /*if (mag < minGradient)
         {
             float3 repulsiveForce = 0;
             for (uint i = 0; i < numObs; i++) {
@@ -102,20 +126,56 @@ void CSPotentialPathMain (uint3 id : SV_DispatchThreadID) {
             }
             probGrid[currentPos] += repulsiveForce;
             F = probGrid[currentPos];
-        }
+        }*/
 
-        float3 dir = normalize(F);
+        /*float3 dir = F;
+        if (length(dir) > minGradient) {
+            dir = normalize(dir);
+        }
         float3 nextPos = IndexToCoordinate(currentPos);
 
         nextPos += float3(
-            ceil(dir.x * cellStepSize),
-            ceil(dir.y * cellStepSize),
-            ceil(dir.z * cellStepSize)
+            (dir.x * cellStepSize),
+            (dir.y * cellStepSize),
+            (dir.z * cellStepSize)
         );
 
-        uint next = CoordToIndex(nextPos);
+        nextPos = clamp(
+            nextPos,
+            gridStart,
+            gridStart + float3(xMax-1, yMax-1, zMax-1) * cellSize
+        );
 
-        currentPos = next;
+        currentPos = CoordToIndex(nextPos);*/
+
+        float bestAccuracy = -1e9;
+        uint bestNeighborIndex = currentPos;
+
+        for (int n = 0; n < 26; n++) {
+            float3 neighborPos = GetGridPos(currentPos) + neighborOffsets[n];
+
+            //make sure that the neighbor is inside the bounds
+            if (neighborPos.x < 0 || neighborPos.y < 0 || neighborPos.z < 0 ||
+            neighborPos.x >= xMax || neighborPos.y >= yMax || neighborPos.z >= zMax) {
+                continue;
+            }
+
+            uint neighborIndex = GetGridIndex(neighborPos);
+
+            float3 neighborCoord = IndexToCoordinate(neighborIndex);
+            float3 d = neighborCoord - currentCoordPos;
+            float l = length(d);
+
+            float accuracy = dot(d, F)/l;
+
+            if (accuracy > bestAccuracy) {
+                bestAccuracy = accuracy;
+                bestNeighborIndex = neighborIndex;
+            }
+        }
+
+        currentPos = bestNeighborIndex;
+
     }
 
     pathStepsBuffer[agent] = steps;

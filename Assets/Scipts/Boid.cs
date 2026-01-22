@@ -101,7 +101,7 @@ public class Boid : MonoBehaviour
     }
 
     /// <summary>
-    /// Applies the separtion rule to the boid
+    /// Applies the separation rule to the boid
     /// </summary>
     private void SeparationRule() {
         separationForce /= boidSettings.separationWeight;
