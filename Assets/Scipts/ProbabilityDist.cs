@@ -23,6 +23,7 @@ public class ProbabilityDist : MonoBehaviour
     float[] probGrid;
     int[] obstaclePos;
     int[] pathStepsData;
+    List<Vector3>[] path;
     LayerMask obstacleMask;
     ComputeShader potentialCompute;
 
@@ -119,12 +120,14 @@ public class ProbabilityDist : MonoBehaviour
 
 
         //Global compute shader parameters
+        potentialCompute.SetBool("isMAPF", boidSettings.isMAPF);
         potentialCompute.SetInt("xMax", (int)gridSize.x);
         potentialCompute.SetInt("yMax", (int)gridSize.y);
         potentialCompute.SetInt("zMax", (int)gridSize.z);
         potentialCompute.SetInt("numObs", obstaclePos.Length);
         potentialCompute.SetInt("numAgents", boidSettings.numBoids);
         potentialCompute.SetInt("maxSteps", boidSettings.maxSteps);
+        potentialCompute.SetFloat("D", boidSettings.D);
         potentialCompute.SetFloat("dIO", boidSettings.obstacleInfluence);
         potentialCompute.SetFloat("kAttractive", kAtt);
         potentialCompute.SetFloat("kRepulsive", kRep);
@@ -162,6 +165,7 @@ public class ProbabilityDist : MonoBehaviour
             if (boidSettings.isPath) {
                 pathStepsBuffer.GetData(pathStepsData);
                 pathBuffer.GetData(pathData);
+                path = GetPGDPathList();
             }
         }
 
@@ -175,18 +179,20 @@ public class ProbabilityDist : MonoBehaviour
         return probGridVec;
     }
 
-    public List<Vector3>[] GetPGDPath() {
+    public List<Vector3>[] GetPGDPathList() {
         List<Vector3>[] paths = new List<Vector3>[boidSettings.numBoids];
         for (int i = 0; i < boidSettings.numBoids; i++) {
             int s = i * boidSettings.maxSteps;
             paths[i] = new List<Vector3>();
-            Debug.Log($"Path for agent {pathStepsData[i]}:");
             for (int j = 0; j < pathStepsData[i]; j++) {
                 paths[i].Add(pathData[s + j]);
-                Debug.Log(pathData[s + j]);
             }
         }
         return paths;
+    }
+
+    public List<Vector3>[] GetPGDPath() {
+        return path;
     }
 
     public int[] GetPathStepsData() {

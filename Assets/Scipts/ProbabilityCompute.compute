@@ -7,12 +7,14 @@ RWStructuredBuffer<uint> pathStepsBuffer;
 RWStructuredBuffer<float3> probGrid;
 RWStructuredBuffer<float3> pathBuffer;
 
+bool isMAPF;
 uint xMax;
 uint yMax;
 uint zMax;
 uint numObs;
 uint numAgents;
 uint maxSteps;
+float D;
 float dIO; //distance of influence for obstacles
 float kAttractive;
 float kRepulsive;
@@ -68,9 +70,23 @@ void CSProbabilityMain (uint3 id : SV_DispatchThreadID) {
 
     //Calculate the force of the potential field at the current
     //grid position
-    float3 attractiveForce = (
-        (-1 * kAttractive) * (currentPos - qGoal)
-    );
+    float3 attractiveForce;
+    if (isMAPF) {
+        attractiveForce = (
+            (-1 * kAttractive) * 
+            (
+                distance(currentPos, qGoal) + 
+                pow((1/(D + distance(currentPos, qGoal))), 3)
+            ) * 
+            ((currentPos - qGoal)/distance(currentPos, qGoal))
+        );
+    }
+    else {
+        attractiveForce = (
+            (-1 * kAttractive) * (currentPos - qGoal)
+        );
+    }
+    
     float3 repulsiveForce = 0;
     for (uint i = 0; i < numObs; i++) {
         float3 qObs = IndexToCoordinate(obstaclePos[i]);
@@ -91,14 +107,13 @@ void CSPotentialPathMain (uint3 id : SV_DispatchThreadID) {
     uint agent = id.x;
     if (agent >= numAgents) return;
 
-    uint currentPos = CoordToIndex(startPosBuffer[agent]);
+    float3 currentCoordPos = startPosBuffer[agent];
     uint basePathIndex = agent * maxSteps;
 
     uint steps = 0;
 
     for (uint i = 0; i < maxSteps; i++)
     {
-        float3 currentCoordPos = IndexToCoordinate(currentPos);
 
         if (distance(currentCoordPos, qGoal) < minGoalDistance)
         {
@@ -108,25 +123,41 @@ void CSPotentialPathMain (uint3 id : SV_DispatchThreadID) {
         pathBuffer[basePathIndex + i] = currentCoordPos;
         steps++;
 
-        float3 F = probGrid[currentPos];
+        uint cellIndex = CoordToIndex(currentCoordPos);
+        float3 F = probGrid[cellIndex];
         float mag = length(F);
-
-        /*if (mag < minGradient)
+        
+        if (mag < minGradient)
         {
-            float3 repulsiveForce = 0;
+            float3 newForce = 0;
             for (uint i = 0; i < numObs; i++) {
                 float3 qObs = IndexToCoordinate(obstaclePos[i]);
                 float dQI = distance(currentCoordPos, qObs);
                 if (dQI < dIO && dQI > 0.0001) {
-                    repulsiveForce += (
+                    newForce -= (
                         kRepulsive * ((currentCoordPos - qObs) / dQI)
                         * (pow((1 / dQI), 2) - pow((1 / dIO), 2))
                     );
                 }
             }
-            probGrid[currentPos] += repulsiveForce;
-            F = probGrid[currentPos];
-        }*/
+            
+            uint currentIndexPos = CoordToIndex(currentCoordPos);
+            probGrid[currentIndexPos] += newForce;
+            F = probGrid[currentIndexPos];
+            mag = length(F);
+        }
+
+        float3 dir = F / mag;
+
+        currentCoordPos += dir * cellStepSize;
+
+        currentCoordPos = clamp(
+            currentCoordPos,
+            gridStart,
+            gridStart + float3(xMax - 1, yMax - 1, zMax - 1) * cellSize
+        );
+
+        
 
         /*float3 dir = F;
         if (length(dir) > minGradient) {
@@ -147,34 +178,6 @@ void CSPotentialPathMain (uint3 id : SV_DispatchThreadID) {
         );
 
         currentPos = CoordToIndex(nextPos);*/
-
-        float bestAccuracy = -1e9;
-        uint bestNeighborIndex = currentPos;
-
-        for (int n = 0; n < 26; n++) {
-            float3 neighborPos = GetGridPos(currentPos) + neighborOffsets[n];
-
-            //make sure that the neighbor is inside the bounds
-            if (neighborPos.x < 0 || neighborPos.y < 0 || neighborPos.z < 0 ||
-            neighborPos.x >= xMax || neighborPos.y >= yMax || neighborPos.z >= zMax) {
-                continue;
-            }
-
-            uint neighborIndex = GetGridIndex(neighborPos);
-
-            float3 neighborCoord = IndexToCoordinate(neighborIndex);
-            float3 d = neighborCoord - currentCoordPos;
-            float l = length(d);
-
-            float accuracy = dot(d, F)/l;
-
-            if (accuracy > bestAccuracy) {
-                bestAccuracy = accuracy;
-                bestNeighborIndex = neighborIndex;
-            }
-        }
-
-        currentPos = bestNeighborIndex;
 
     }
 

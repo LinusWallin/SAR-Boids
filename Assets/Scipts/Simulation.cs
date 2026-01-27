@@ -469,14 +469,14 @@ public class Simulation : MonoBehaviour
         if (boidSettings.isPath) {
             List<Vector3>[] paths = probDist.GetPGDPath();
             int[] pathSteps = probDist.GetPathStepsData();
-            foreach (int s in pathSteps) {
-                for (int i = 0; i < boidSettings.numBoids; i++) {
-                    for (int j = 1; j < s; j++) {
-                        Gizmos.color = Color.red;
-                        Gizmos.DrawLine(paths[i][j-1], paths[i][j]);
-                    }
+            for (int i = 0; i < boidSettings.numBoids; i++) {
+                int s  = pathSteps[i];
+                for (int j = 1; j < s; j++) {
+                    Gizmos.color = Color.red;
+                    Gizmos.DrawLine(paths[i][j-1], paths[i][j]);
                 }
             }
+        
         }
 
         for (int i = 0; i < boidSettings.gridSize.x; i++)

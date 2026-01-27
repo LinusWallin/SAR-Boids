@@ -76,8 +76,6 @@ void CSMain (uint3 id : SV_DispatchThreadID) {
                 }
             }
             if (isField == 1) {
-                //int3 boidGridIdx = int3(floor((currBoid.position - gridStart) / cellSize));
-                //uint gridIndex = CoordinateToIndex(boidGridIdx);
                 int3 boidGridIdx = int3(
                     floor((currBoid.position.x - gridStart.x)/cellSize.x),
                     floor((currBoid.position.y - gridStart.y)/cellSize.y),

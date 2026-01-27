@@ -36,11 +36,12 @@ MonoBehaviour:
   isMAPF: 1
   isPath: 1
   isCBF: 0
-  maxSteps: 100
-  minGradient: 0.001
+  maxSteps: 500
+  minGradient: 10
   cellRadius: 0.5
   gridSize: {x: 250, y: 80, z: 250}
   obstacleInfluence: 1000
+  D: 2.28
   kAtt: 1
   kRep: 100
   goalRadius: 5

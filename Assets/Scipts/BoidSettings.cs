@@ -41,6 +41,7 @@ public class BoidSettings : ScriptableObject
     public float cellRadius;
     public Vector3 gridSize;
     public float obstacleInfluence;
+    public float D;
     public float kAtt;
     public float kRep;
     public float goalRadius;
