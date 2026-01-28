@@ -25,20 +25,6 @@ float3 cellSize;
 float3 gridStart;
 float3 qGoal;
 
-static const int3 neighborOffsets[26] = {
-    int3(-1,-1,-1), int3(0,-1,-1), int3(1,-1,-1),
-    int3(-1, 0,-1), int3(0, 0,-1), int3(1, 0,-1),
-    int3(-1, 1,-1), int3(0, 1,-1), int3(1, 1,-1),
-
-    int3(-1,-1, 0), int3(0,-1, 0), int3(1,-1, 0),
-    int3(-1, 0, 0),                 int3(1, 0, 0),
-    int3(-1, 1, 0), int3(0, 1, 0), int3(1, 1, 0),
-
-    int3(-1,-1, 1), int3(0,-1, 1), int3(1,-1, 1),
-    int3(-1, 0, 1), int3(0, 0, 1), int3(1, 0, 1),
-    int3(-1, 1, 1), int3(0, 1, 1), int3(1, 1, 1)
-};
-
 uint3 GetGridPos(uint cellIndex) {
     uint3 g;
     g.x = cellIndex % xMax;
@@ -156,28 +142,6 @@ void CSPotentialPathMain (uint3 id : SV_DispatchThreadID) {
             gridStart,
             gridStart + float3(xMax - 1, yMax - 1, zMax - 1) * cellSize
         );
-
-        
-
-        /*float3 dir = F;
-        if (length(dir) > minGradient) {
-            dir = normalize(dir);
-        }
-        float3 nextPos = IndexToCoordinate(currentPos);
-
-        nextPos += float3(
-            (dir.x * cellStepSize),
-            (dir.y * cellStepSize),
-            (dir.z * cellStepSize)
-        );
-
-        nextPos = clamp(
-            nextPos,
-            gridStart,
-            gridStart + float3(xMax-1, yMax-1, zMax-1) * cellSize
-        );
-
-        currentPos = CoordToIndex(nextPos);*/
 
     }
 
