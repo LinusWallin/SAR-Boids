@@ -26,6 +26,8 @@ public class Boid : MonoBehaviour
     public Vector3 alignmentForce;
     public Vector3 cohesionForce;
     public Vector3 flockCenter;
+    public Vector3 pathForce;
+    public Vector3 forwardForce;
     public GameObject target;
     
     

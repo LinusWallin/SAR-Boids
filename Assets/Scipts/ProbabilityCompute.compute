@@ -25,34 +25,13 @@ float3 cellSize;
 float3 gridStart;
 float3 qGoal;
 
-uint3 GetGridPos(uint cellIndex) {
-    uint3 g;
-    g.x = cellIndex % xMax;
-    g.y = (cellIndex / xMax) % yMax;
-    g.z = cellIndex / (xMax * yMax);
-    return g;
-}
-
-uint GetGridIndex(uint3 gridPos) {
-    return gridPos.x + gridPos.y * xMax + gridPos.z * xMax * yMax;
-}
-
-uint CoordToIndex(float3 coord) {
-    uint3 local = (uint3)floor((coord - gridStart) / cellSize);
-    uint coordIndex = local.x + local.y * xMax + local.z * xMax * yMax;
-    return coordIndex;
-}
-
-float3 IndexToCoordinate(uint cellIndex) {
-    uint3 g = GetGridPos(cellIndex);
-    return gridStart + float3(g.x, g.y, g.z) * cellSize;
-}
+#include "GridUtils.hlsl"
 
 [numthreads(1024, 1, 1)]
 void CSProbabilityMain (uint3 id : SV_DispatchThreadID) {
     uint cellIndex = id.x;
     if (cellIndex >= (xMax * yMax * zMax)) return;
-    float3 currentPos = IndexToCoordinate(cellIndex);
+    float3 currentPos = IndexToCoordinate(cellIndex, gridStart, cellSize, xMax, yMax);
 
     //Calculate the force of the potential field at the current
     //grid position
@@ -75,7 +54,7 @@ void CSProbabilityMain (uint3 id : SV_DispatchThreadID) {
     
     float3 repulsiveForce = 0;
     for (uint i = 0; i < numObs; i++) {
-        float3 qObs = IndexToCoordinate(obstaclePos[i]);
+        float3 qObs = IndexToCoordinate(obstaclePos[i], gridStart, cellSize, xMax, yMax);
         float dQI = distance(currentPos, qObs);
         if (dQI < dIO && dQI > 0.0001) {
             repulsiveForce += (
@@ -109,7 +88,7 @@ void CSPotentialPathMain (uint3 id : SV_DispatchThreadID) {
         pathBuffer[basePathIndex + i] = currentCoordPos;
         steps++;
 
-        uint cellIndex = CoordToIndex(currentCoordPos);
+        uint cellIndex = CoordToIndex(currentCoordPos, gridStart, cellSize, xMax, yMax);
         float3 F = probGrid[cellIndex];
         float mag = length(F);
         
@@ -117,7 +96,7 @@ void CSPotentialPathMain (uint3 id : SV_DispatchThreadID) {
         {
             float3 newForce = 0;
             for (uint i = 0; i < numObs; i++) {
-                float3 qObs = IndexToCoordinate(obstaclePos[i]);
+                float3 qObs = IndexToCoordinate(obstaclePos[i], gridStart, cellSize, xMax, yMax);
                 float dQI = distance(currentCoordPos, qObs);
                 if (dQI < dIO && dQI > 0.0001) {
                     newForce -= (
@@ -127,7 +106,7 @@ void CSPotentialPathMain (uint3 id : SV_DispatchThreadID) {
                 }
             }
             
-            uint currentIndexPos = CoordToIndex(currentCoordPos);
+            uint currentIndexPos = CoordToIndex(currentCoordPos, gridStart, cellSize, xMax, yMax);
             probGrid[currentIndexPos] += newForce;
             F = probGrid[currentIndexPos];
             mag = length(F);

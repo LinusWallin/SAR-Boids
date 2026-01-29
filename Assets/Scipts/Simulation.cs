@@ -23,6 +23,7 @@ public class Simulation : MonoBehaviour
     [SerializeField] private LayerMask obstacleMask;
     ProbabilityDist probDist;
     Vector3[] potentialField;
+    List<Vector3>[] paths;
     Boid[] boids;
     Boid[] aliveBoids;
     Boid[] boidCMs;
@@ -56,7 +57,7 @@ public class Simulation : MonoBehaviour
         );
         potentialField = probDist.GetProbGrid();
         
-        probDist.GetPGDPath();
+        paths = probDist.GetPGDPath();
 
         List<Boid[]> boidList = new List<Boid[]>();
         int numGhosts = 0;
@@ -523,6 +524,10 @@ public class Simulation : MonoBehaviour
                     {
                         boidData[i].position = boids[i].position;
                         boidData[i].direction = boids[i].direction;
+                        if (boidSettings.isPath && i < boidSettings.numBoids) {
+                            boidData[i].currentPathIndex = i * boidSettings.maxSteps;
+                            boidData[i].pathEndIndex = boidData[i].currentPathIndex + paths[i].Count;
+                        }
                         if (boids[i].isAlive)
                         {
                             boidData[i].isAlive = 1;
@@ -555,16 +560,28 @@ public class Simulation : MonoBehaviour
                 var fieldBuffer = new ComputeBuffer(potentialField.Length, sizeof(float) * 3);
                 fieldBuffer.SetData(potentialField);
 
+                
                 //Set compute shader variables
                 compute.SetBuffer(0, "boids", boidBuffer);
                 compute.SetBuffer(0, "neighbors", neighborBuffer);
                 compute.SetBuffer(0, "potentialField", fieldBuffer);
+
+                if (boidSettings.isPath) {
+                    Vector3[] pathArray = probDist.GetPathArray();
+                    var pathBuffer = new ComputeBuffer(pathArray.Length, sizeof(float) * 3);
+                    pathBuffer.SetData(pathArray);
+                    compute.SetBuffer(0, "path", pathBuffer);
+                }
+                
                 compute.SetInt("numBoids", boids.Length);
                 compute.SetInt("maxNeighbors", maxNeighbors);
                 compute.SetFloat("neighborMaxDist", boidSettings.neighborMaxDist);
                 compute.SetFloat("desiredDist", boidSettings.desiredDist);
                 compute.SetFloat("goalRadius", boidSettings.goalRadius);
-                compute.SetInt("isField", boidSettings.potentialField ? 1 : 0);
+                compute.SetFloat("kPath", boidSettings.kPath);
+                compute.SetBool("isPath", boidSettings.isPath);
+                compute.SetBool("isField", boidSettings.potentialField);
+                compute.SetInt("kForward", boidSettings.kForward);
                 compute.SetInts(
                     "gridSize",
                     (int)boidSettings.gridSize.x,
@@ -614,6 +631,10 @@ public class Simulation : MonoBehaviour
                                 boids[i].numFlockmates = boidData[i].numFlockmates;
                                 boids[i].alignmentForce = boidData[i].flockDirection;
                                 boids[i].separationForce = boidData[i].separationDirection.normalized;
+                                if (boidSettings.isPath) {
+                                    boids[i].pathForce = boidData[i].pathForce;
+                                    boids[i].forwardForce = boidData[i].forwardForce;
+                                }
                                 boids[i].neighborPos.Clear();
 
                                 int startIdx = i * maxNeighbors;
@@ -689,6 +710,10 @@ public class Simulation : MonoBehaviour
         public Vector3 flockDirection;
         public Vector3 flockCenter;
         public Vector3 separationDirection;
+        public Vector3 pathForce;
+        public Vector3 forwardForce;
+        public int currentPathIndex;
+        public int pathEndIndex;
         public int numFlockmates;
         public int isAlive;
         public int goalReached;
@@ -697,7 +722,7 @@ public class Simulation : MonoBehaviour
         {
             get
             {
-                return sizeof(float) * 3 * 5 + sizeof(int) * 3;
+                return sizeof(float) * 3 * 7 + sizeof(int) * 5;
             }
         }
     }

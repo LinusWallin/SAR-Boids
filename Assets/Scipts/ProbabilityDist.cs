@@ -195,6 +195,16 @@ public class ProbabilityDist : MonoBehaviour
         return path;
     }
 
+    public Vector3[] GetPathArray() {
+        Vector3[] pathArr = new Vector3[boidSettings.numBoids * boidSettings.maxSteps];
+        for (int i = 0; i < boidSettings.numBoids; i++) {
+            for (int j = 0; j < path[i].Count; j++) {
+                pathArr[i * boidSettings.maxSteps + j] = path[i][j];
+            }
+        }
+        return pathArr;
+    }
+
     public int[] GetPathStepsData() {
         return pathStepsData;
     }

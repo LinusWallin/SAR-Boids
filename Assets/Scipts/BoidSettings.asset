@@ -44,4 +44,5 @@ MonoBehaviour:
   D: 2.28
   kAtt: 1
   kRep: 100
+  kForward: 1
   goalRadius: 5

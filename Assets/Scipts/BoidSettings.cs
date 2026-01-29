@@ -44,5 +44,8 @@ public class BoidSettings : ScriptableObject
     public float D;
     public float kAtt;
     public float kRep;
+    [Range(0, 100)]
+    public int kForward;
+    public float kPath;
     public float goalRadius;
 }
