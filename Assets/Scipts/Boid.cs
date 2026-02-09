@@ -15,6 +15,7 @@ public class Boid : MonoBehaviour
     public bool isLeader;
     public float speed;
     public int numFlockmates;
+    public int pathIndex;
     public List<Vector3> neighborPos;
     public Vector3 direction;
     public Vector3 position{
@@ -44,10 +45,11 @@ public class Boid : MonoBehaviour
     /// <param name="boidSettings">Settings for the boids in the simulation</param>
     /// <param name="direction">Initial direction of the boid</param>
     /// <param name="speed">Initial speed of the boid</param>
-    public void Init(BoidSettings boidSettings, Vector3 direction, float speed, bool lifeStatus) {
+    public void Init(BoidSettings boidSettings, Vector3 direction, float speed, int pIndex, bool lifeStatus) {
         this.boidSettings = boidSettings;
         this.direction = direction;
         this.speed = speed;
+        this.pathIndex = pIndex;
         this.isAlive = lifeStatus;
         this.isGoal = false;
         this.numFlockmates = 0;
@@ -71,6 +73,11 @@ public class Boid : MonoBehaviour
         newDir += cohesionForce;
         newDir += separationForce;
         newDir += alignmentForce;
+        Debug.DrawLine(position, position + pathForce, Color.red);
+        if (boidSettings.isPath) {
+            newDir += pathForce;
+            newDir += forwardForce;
+        }
         direction = Vector3.RotateTowards(
             direction, 
             newDir, 

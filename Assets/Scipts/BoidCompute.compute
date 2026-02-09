@@ -33,6 +33,7 @@ float neighborMaxDist;
 float desiredDist;
 float goalRadius;
 float kPath;
+float minPathDist;
 
 bool isPath;
 bool isField;
@@ -41,11 +42,6 @@ int3 gridSize;
 float3 cellSize;
 float3 gridStart;
 float3 targetPos;
-
-/*uint CoordinateToIndex(int3 pos) {
-    uint coordinateIdx = pos.x + pos.y * gridSize.x + pos.z * gridSize.x * gridSize.y;
-    return coordinateIdx;
-}*/
 
 #include "GridUtils.hlsl"
 
@@ -83,15 +79,20 @@ void CSMain (uint3 id : SV_DispatchThreadID) {
                             }
 
                             if (isPath) {
-                                if (boidI.currentPathIndex != boidI.pathEndIndex) {
-                                    boidI.currentPathIndex += 1;
+                                if (currBoid.currentPathIndex != currBoid.pathEndIndex - 1) {
+                                    float distToNext = distance(path[currBoid.currentPathIndex + 1], currBoid.position);
+                                    float distToCurr = distance(path[currBoid.currentPathIndex], currBoid.position);
+                                    bool cond = (distToNext < distToCurr) || (distToCurr < minPathDist);
+                                    if (cond) {
+                                        currBoid.currentPathIndex += 1;
+                                    }
                                 }
 
-                                uint bestIndex = boidI.currentPathIndex;
-                                float3 distToPath = path[bestIndex] - boidI.position;
+                                uint bestIndex = currBoid.currentPathIndex;
+                                float3 distToPath = path[bestIndex] - currBoid.position;
 
-                                boidI.pathForce = distToPath * length(distToPath) * kPath;
-                                boidI.forwardForce = normalize(path[bestIndex + 1] - path[bestIndex]) * kForward;
+                                currBoid.pathForce = distToPath * length(distToPath) * kPath;
+                                currBoid.forwardForce = normalize(path[bestIndex + 1] - path[bestIndex]) * kForward;
                             }
                             
                         }

@@ -163,6 +163,7 @@ public class Simulation : MonoBehaviour
                 boidSettings,
                 direction,
                 speed,
+                i * boidSettings.maxSteps,
                 true
             );
         }
@@ -305,6 +306,7 @@ public class Simulation : MonoBehaviour
                 boidCM[ghostIdx].Init(
                     boidSettings,
                     ghostDir,
+                    0,
                     0,
                     false
                 );
@@ -451,6 +453,7 @@ public class Simulation : MonoBehaviour
                         boidSettings,
                         surfaceNormal,
                         0,
+                        0,
                         false
                     );
                 }
@@ -525,7 +528,7 @@ public class Simulation : MonoBehaviour
                         boidData[i].position = boids[i].position;
                         boidData[i].direction = boids[i].direction;
                         if (boidSettings.isPath && i < boidSettings.numBoids) {
-                            boidData[i].currentPathIndex = i * boidSettings.maxSteps;
+                            boidData[i].currentPathIndex = boids[i].pathIndex; //RESTS EACH FRAME?!?!?
                             boidData[i].pathEndIndex = boidData[i].currentPathIndex + paths[i].Count;
                         }
                         if (boids[i].isAlive)
@@ -579,6 +582,7 @@ public class Simulation : MonoBehaviour
                 compute.SetFloat("desiredDist", boidSettings.desiredDist);
                 compute.SetFloat("goalRadius", boidSettings.goalRadius);
                 compute.SetFloat("kPath", boidSettings.kPath);
+                compute.SetFloat("minPathDist", boidSettings.minPathDist);
                 compute.SetBool("isPath", boidSettings.isPath);
                 compute.SetBool("isField", boidSettings.potentialField);
                 compute.SetInt("kForward", boidSettings.kForward);
@@ -632,6 +636,7 @@ public class Simulation : MonoBehaviour
                                 boids[i].alignmentForce = boidData[i].flockDirection;
                                 boids[i].separationForce = boidData[i].separationDirection.normalized;
                                 if (boidSettings.isPath) {
+                                    boids[i].pathIndex = boidData[i].currentPathIndex;
                                     boids[i].pathForce = boidData[i].pathForce;
                                     boids[i].forwardForce = boidData[i].forwardForce;
                                 }

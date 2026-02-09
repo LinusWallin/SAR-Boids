@@ -44,5 +44,7 @@ MonoBehaviour:
   D: 2.28
   kAtt: 1
   kRep: 100
-  kForward: 1
+  kForward: 20
+  kPath: 100
+  minPathDist: 0.5
   goalRadius: 5
