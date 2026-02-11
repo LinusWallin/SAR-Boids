@@ -7,7 +7,7 @@ using UnityEngine;
 public static class Utils
 {
     /// <summary>
-    /// Performes element wise division on Vector3
+    /// Performs element wise division on Vector3
     /// </summary>
     /// <param name="u">The vector to be divided</param>
     /// <param name="v">The vector to divide with</param>

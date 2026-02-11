@@ -102,7 +102,7 @@ public class ProbabilityDist : MonoBehaviour
     }
 
     /// <summary>
-    /// Calculates the potential field
+    /// Calculates the potential field and generates a path for each boid
     /// </summary>
     /// <returns>Potential field</returns>
     public Vector3[] GetProbGrid()
@@ -179,6 +179,10 @@ public class ProbabilityDist : MonoBehaviour
         return probGridVec;
     }
 
+    /// <summary>
+    /// Reads path data and creates arrays for each boid of its path information
+    /// </summary>
+    /// <returns></returns>
     public List<Vector3>[] GetPGDPathList() {
         List<Vector3>[] paths = new List<Vector3>[boidSettings.numBoids];
         for (int i = 0; i < boidSettings.numBoids; i++) {
@@ -191,10 +195,19 @@ public class ProbabilityDist : MonoBehaviour
         return paths;
     }
 
+    /// <summary>
+    /// Gets the path list containing information about each boids individual path
+    /// </summary>
+    /// <returns></returns>
     public List<Vector3>[] GetPGDPath() {
         return path;
     }
 
+    /// <summary>
+    /// Takes the list of paths and converts it into an index based array,
+    /// which is readable in compute files
+    /// </summary>
+    /// <returns></returns>
     public Vector3[] GetPathArray() {
         Vector3[] pathArr = new Vector3[boidSettings.numBoids * boidSettings.maxSteps];
         for (int i = 0; i < boidSettings.numBoids; i++) {
@@ -205,6 +218,10 @@ public class ProbabilityDist : MonoBehaviour
         return pathArr;
     }
 
+    /// <summary>
+    /// Gets the step count for each path as an array
+    /// </summary>
+    /// <returns></returns>
     public int[] GetPathStepsData() {
         return pathStepsData;
     }
