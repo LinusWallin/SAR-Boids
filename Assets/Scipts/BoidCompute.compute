@@ -8,6 +8,10 @@ struct Boid {
     float3 flockDirection;
     float3 flockCenter;
     float3 separationDirection;
+    float3 pathForce;
+    float3 forwardForce;
+    int currentPathIndex;
+    int pathEndIndex;
     int numFlockmates;
     int isAlive;
     int goalReached;
@@ -21,23 +25,25 @@ struct Neighbor {
 RWStructuredBuffer<Boid> boids;
 RWStructuredBuffer<Neighbor> neighbors;
 RWStructuredBuffer<float3> potentialField;
+StructuredBuffer<float3> path;
 
 int numBoids;
 int maxNeighbors;
 float neighborMaxDist;
 float desiredDist;
 float goalRadius;
+float kPath;
+float minPathDist;
 
-int isField;
+bool isPath;
+bool isField;
+uint kForward;
 int3 gridSize;
 float3 cellSize;
 float3 gridStart;
 float3 targetPos;
 
-uint CoordinateToIndex(int3 pos) {
-    uint coordinateIdx = pos.x + pos.y * gridSize.x + pos.z * gridSize.x * gridSize.y;
-    return coordinateIdx;
-}
+#include "GridUtils.hlsl"
 
 [numthreads(threadGroupSize, 1, 1)]
 void CSMain (uint3 id : SV_DispatchThreadID) {
@@ -71,19 +77,30 @@ void CSMain (uint3 id : SV_DispatchThreadID) {
                                     currBoid.separationDirection -= offset;
                                 }
                             }
+
+                            if (isPath) {
+                                if (currBoid.currentPathIndex != currBoid.pathEndIndex - 1) {
+                                    float distToNext = distance(path[currBoid.currentPathIndex + 1], currBoid.position);
+                                    float distToCurr = distance(path[currBoid.currentPathIndex], currBoid.position);
+                                    bool cond = (distToNext < distToCurr) || (distToCurr < minPathDist);
+                                    if (cond) {
+                                        currBoid.currentPathIndex += 1;
+                                    }
+                                }
+
+                                uint bestIndex = currBoid.currentPathIndex;
+                                float3 distToPath = path[bestIndex] - currBoid.position;
+
+                                currBoid.pathForce = distToPath * length(distToPath) * kPath;
+                                currBoid.forwardForce = normalize(path[bestIndex + 1] - path[bestIndex]) * kForward;
+                            }
+                            
                         }
                     }
                 }
             }
-            if (isField == 1) {
-                //int3 boidGridIdx = int3(floor((currBoid.position - gridStart) / cellSize));
-                //uint gridIndex = CoordinateToIndex(boidGridIdx);
-                int3 boidGridIdx = int3(
-                    floor((currBoid.position.x - gridStart.x)/cellSize.x),
-                    floor((currBoid.position.y - gridStart.y)/cellSize.y),
-                    floor((currBoid.position.z - gridStart.z)/cellSize.z)
-                );
-                uint gridIndex = boidGridIdx.x + boidGridIdx.y * gridSize.x + boidGridIdx.z * gridSize.x * gridSize.y;
+            if (isField) {
+                uint gridIndex = CoordToIndex(currBoid.position, gridStart, cellSize, gridSize.x, gridSize.y);
                 currBoid.flockDirection = potentialField[gridIndex];
             }
         }

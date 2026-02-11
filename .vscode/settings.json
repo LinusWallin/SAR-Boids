@@ -56,5 +56,21 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "SAR-Boids.sln"
+    "dotnet.defaultSolution": "SAR-Boids.sln",
+    "cSpell.words": [
+        "Behaviour",
+        "boid",
+        "Boid",
+        "boids",
+        "Boids",
+        "Flockmates",
+        "Lerp",
+        "MAPF",
+        "Mathf",
+        "numthreads",
+        "osqp",
+        "Scriptable",
+        "spawnboids",
+        "Wallin"
+    ]
 }

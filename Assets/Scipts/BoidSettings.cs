@@ -33,11 +33,20 @@ public class BoidSettings : ScriptableObject
     public float startDist;
 
     public bool potentialField;
+    public bool isMAPF;
+    public bool isPath;
     public bool isCBF;
+    public int maxSteps;
+    public float minGradient;
     public float cellRadius;
     public Vector3 gridSize;
     public float obstacleInfluence;
+    public float D;
     public float kAtt;
     public float kRep;
+    [Range(0, 100)]
+    public int kForward;
+    public float kPath;
+    public float minPathDist;
     public float goalRadius;
 }

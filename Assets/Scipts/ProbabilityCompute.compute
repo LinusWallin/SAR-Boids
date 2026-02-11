@@ -1,39 +1,60 @@
 #pragma kernel CSProbabilityMain
+#pragma kernel CSPotentialPathMain
 
 StructuredBuffer<uint> obstaclePos;
+StructuredBuffer<float3> startPosBuffer;
+RWStructuredBuffer<uint> pathStepsBuffer;
 RWStructuredBuffer<float3> probGrid;
+RWStructuredBuffer<float3> pathBuffer;
 
-int xMax;
-int yMax;
-int zMax;
-int numObs;
+bool isMAPF;
+uint xMax;
+uint yMax;
+uint zMax;
+uint numObs;
+uint numAgents;
+uint maxSteps;
+float D;
 float dIO; //distance of influence for obstacles
 float kAttractive;
 float kRepulsive;
+float minGradient;
+float cellStepSize;
+float minGoalDistance;
 float3 cellSize;
 float3 gridStart;
 float3 qGoal;
 
-float3 IndexToCoordinate(uint cellIndex) {
-    uint x = cellIndex % xMax;
-    uint y = (cellIndex / xMax) % yMax;
-    uint z = cellIndex / (xMax * yMax);
-    return gridStart + float3(x, y, z) * cellSize;
-}
+#include "GridUtils.hlsl"
 
 [numthreads(1024, 1, 1)]
 void CSProbabilityMain (uint3 id : SV_DispatchThreadID) {
     uint cellIndex = id.x;
-    float3 currentPos = IndexToCoordinate(cellIndex);
+    if (cellIndex >= (xMax * yMax * zMax)) return;
+    float3 currentPos = IndexToCoordinate(cellIndex, gridStart, cellSize, xMax, yMax);
 
     //Calculate the force of the potential field at the current
     //grid position
-    float3 attractiveForce = (
-        (-1 * kAttractive) * (currentPos - qGoal)
-    );
+    float3 attractiveForce;
+    if (isMAPF) {
+        attractiveForce = (
+            (-1 * kAttractive) * 
+            (
+                distance(currentPos, qGoal) + 
+                pow((1/(D + distance(currentPos, qGoal))), 3)
+            ) * 
+            ((currentPos - qGoal)/distance(currentPos, qGoal))
+        );
+    }
+    else {
+        attractiveForce = (
+            (-1 * kAttractive) * (currentPos - qGoal)
+        );
+    }
+    
     float3 repulsiveForce = 0;
     for (uint i = 0; i < numObs; i++) {
-        float3 qObs = IndexToCoordinate(obstaclePos[i]);
+        float3 qObs = IndexToCoordinate(obstaclePos[i], gridStart, cellSize, xMax, yMax);
         float dQI = distance(currentPos, qObs);
         if (dQI < dIO && dQI > 0.0001) {
             repulsiveForce += (
@@ -44,4 +65,65 @@ void CSProbabilityMain (uint3 id : SV_DispatchThreadID) {
     }
     float3 totalForce = attractiveForce + repulsiveForce;
     probGrid[cellIndex] = totalForce;
+}
+
+[numthreads(64, 1, 1)]
+void CSPotentialPathMain (uint3 id : SV_DispatchThreadID) {
+    uint agent = id.x;
+    if (agent >= numAgents) return;
+
+    float3 currentCoordPos = startPosBuffer[agent];
+    uint basePathIndex = agent * maxSteps;
+
+    uint steps = 0;
+
+    for (uint i = 0; i < maxSteps; i++)
+    {
+
+        if (distance(currentCoordPos, qGoal) < minGoalDistance)
+        {
+            break;
+        }
+
+        pathBuffer[basePathIndex + i] = currentCoordPos;
+        steps++;
+
+        uint cellIndex = CoordToIndex(currentCoordPos, gridStart, cellSize, xMax, yMax);
+        float3 F = probGrid[cellIndex];
+        float mag = length(F);
+        
+        if (mag < minGradient)
+        {
+            float3 newForce = 0;
+            for (uint i = 0; i < numObs; i++) {
+                float3 qObs = IndexToCoordinate(obstaclePos[i], gridStart, cellSize, xMax, yMax);
+                float dQI = distance(currentCoordPos, qObs);
+                if (dQI < dIO && dQI > 0.0001) {
+                    newForce -= (
+                        kRepulsive * ((currentCoordPos - qObs) / dQI)
+                        * (pow((1 / dQI), 2) - pow((1 / dIO), 2))
+                    );
+                }
+            }
+            
+            uint currentIndexPos = CoordToIndex(currentCoordPos, gridStart, cellSize, xMax, yMax);
+            probGrid[currentIndexPos] += newForce;
+            F = probGrid[currentIndexPos];
+            mag = length(F);
+        }
+
+        float3 dir = F / mag;
+
+        currentCoordPos += dir * cellStepSize;
+
+        currentCoordPos = clamp(
+            currentCoordPos,
+            gridStart,
+            gridStart + float3(xMax - 1, yMax - 1, zMax - 1) * cellSize
+        );
+
+    }
+
+    pathStepsBuffer[agent] = steps;
+
 }

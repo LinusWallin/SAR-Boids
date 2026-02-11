@@ -23,6 +23,7 @@ public class Simulation : MonoBehaviour
     [SerializeField] private LayerMask obstacleMask;
     ProbabilityDist probDist;
     Vector3[] potentialField;
+    List<Vector3>[] paths;
     Boid[] boids;
     Boid[] aliveBoids;
     Boid[] boidCMs;
@@ -33,21 +34,10 @@ public class Simulation : MonoBehaviour
     void Start()
     {
         gridStart = GetGridStart();
+        
+        SpawnBoids();
+
         probDist = gameObject.AddComponent<ProbabilityDist>();
-        probDist.Init(
-            obstacleMask,
-            gridStart,
-            boidSettings.gridSize,
-            new Vector3(
-                boidSettings.cellRadius * 2,
-                boidSettings.cellRadius * 2,
-                boidSettings.cellRadius * 2
-            ),
-            target.transform.position,
-            potentialCompute,
-            boidSettings
-        );
-        potentialField = probDist.GetProbGrid();
 
         cellSize = new Vector3(
                 boidSettings.cellRadius * 2,
@@ -55,7 +45,19 @@ public class Simulation : MonoBehaviour
                 boidSettings.cellRadius * 2
             );
 
-        SpawnBoids();
+        probDist.Init(
+            obstacleMask,
+            gridStart,
+            boidSettings.gridSize,
+            cellSize,
+            target.transform.position,
+            aliveBoids.Select(b => b.position).ToArray(),
+            potentialCompute,
+            boidSettings
+        );
+        potentialField = probDist.GetProbGrid();
+        
+        paths = probDist.GetPGDPath();
 
         List<Boid[]> boidList = new List<Boid[]>();
         int numGhosts = 0;
@@ -161,6 +163,7 @@ public class Simulation : MonoBehaviour
                 boidSettings,
                 direction,
                 speed,
+                i * boidSettings.maxSteps,
                 true
             );
         }
@@ -303,6 +306,7 @@ public class Simulation : MonoBehaviour
                 boidCM[ghostIdx].Init(
                     boidSettings,
                     ghostDir,
+                    0,
                     0,
                     false
                 );
@@ -449,6 +453,7 @@ public class Simulation : MonoBehaviour
                         boidSettings,
                         surfaceNormal,
                         0,
+                        0,
                         false
                     );
                 }
@@ -464,6 +469,19 @@ public class Simulation : MonoBehaviour
     {
         if (potentialField == null) return;
         if (potentialField.Length == 0) return;
+
+        if (boidSettings.isPath) {
+            List<Vector3>[] paths = probDist.GetPGDPath();
+            int[] pathSteps = probDist.GetPathStepsData();
+            for (int i = 0; i < boidSettings.numBoids; i++) {
+                int s  = pathSteps[i];
+                for (int j = 1; j < s; j++) {
+                    Gizmos.color = Color.red;
+                    Gizmos.DrawLine(paths[i][j-1], paths[i][j]);
+                }
+            }
+        
+        }
 
         for (int i = 0; i < boidSettings.gridSize.x; i++)
         {
@@ -509,6 +527,10 @@ public class Simulation : MonoBehaviour
                     {
                         boidData[i].position = boids[i].position;
                         boidData[i].direction = boids[i].direction;
+                        if (boidSettings.isPath && i < boidSettings.numBoids) {
+                            boidData[i].currentPathIndex = boids[i].pathIndex; //RESTS EACH FRAME?!?!?
+                            boidData[i].pathEndIndex = boidData[i].currentPathIndex + paths[i].Count;
+                        }
                         if (boids[i].isAlive)
                         {
                             boidData[i].isAlive = 1;
@@ -541,16 +563,29 @@ public class Simulation : MonoBehaviour
                 var fieldBuffer = new ComputeBuffer(potentialField.Length, sizeof(float) * 3);
                 fieldBuffer.SetData(potentialField);
 
+                
                 //Set compute shader variables
                 compute.SetBuffer(0, "boids", boidBuffer);
                 compute.SetBuffer(0, "neighbors", neighborBuffer);
                 compute.SetBuffer(0, "potentialField", fieldBuffer);
+
+                if (boidSettings.isPath) {
+                    Vector3[] pathArray = probDist.GetPathArray();
+                    var pathBuffer = new ComputeBuffer(pathArray.Length, sizeof(float) * 3);
+                    pathBuffer.SetData(pathArray);
+                    compute.SetBuffer(0, "path", pathBuffer);
+                }
+                
                 compute.SetInt("numBoids", boids.Length);
                 compute.SetInt("maxNeighbors", maxNeighbors);
                 compute.SetFloat("neighborMaxDist", boidSettings.neighborMaxDist);
                 compute.SetFloat("desiredDist", boidSettings.desiredDist);
                 compute.SetFloat("goalRadius", boidSettings.goalRadius);
-                compute.SetInt("isField", boidSettings.potentialField ? 1 : 0);
+                compute.SetFloat("kPath", boidSettings.kPath);
+                compute.SetFloat("minPathDist", boidSettings.minPathDist);
+                compute.SetBool("isPath", boidSettings.isPath);
+                compute.SetBool("isField", boidSettings.potentialField);
+                compute.SetInt("kForward", boidSettings.kForward);
                 compute.SetInts(
                     "gridSize",
                     (int)boidSettings.gridSize.x,
@@ -600,6 +635,11 @@ public class Simulation : MonoBehaviour
                                 boids[i].numFlockmates = boidData[i].numFlockmates;
                                 boids[i].alignmentForce = boidData[i].flockDirection;
                                 boids[i].separationForce = boidData[i].separationDirection.normalized;
+                                if (boidSettings.isPath) {
+                                    boids[i].pathIndex = boidData[i].currentPathIndex;
+                                    boids[i].pathForce = boidData[i].pathForce;
+                                    boids[i].forwardForce = boidData[i].forwardForce;
+                                }
                                 boids[i].neighborPos.Clear();
 
                                 int startIdx = i * maxNeighbors;
@@ -675,6 +715,10 @@ public class Simulation : MonoBehaviour
         public Vector3 flockDirection;
         public Vector3 flockCenter;
         public Vector3 separationDirection;
+        public Vector3 pathForce;
+        public Vector3 forwardForce;
+        public int currentPathIndex;
+        public int pathEndIndex;
         public int numFlockmates;
         public int isAlive;
         public int goalReached;
@@ -683,7 +727,7 @@ public class Simulation : MonoBehaviour
         {
             get
             {
-                return sizeof(float) * 3 * 5 + sizeof(int) * 3;
+                return sizeof(float) * 3 * 7 + sizeof(int) * 5;
             }
         }
     }
