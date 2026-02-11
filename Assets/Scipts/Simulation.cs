@@ -135,6 +135,10 @@ public class Simulation : MonoBehaviour
         );
     }
 
+    /// <summary>
+    /// Spawns the boids in the scene so that the simulation
+    /// can take place
+    /// </summary>
     void SpawnBoids()
     {
         aliveBoids = new Boid[boidSettings.numBoids];
@@ -176,6 +180,12 @@ public class Simulation : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Gets a random subset of boid indices
+    /// </summary>
+    /// <param name="arrLen">The number of boids in the array</param>
+    /// <param name="subsetSize">How many indices to randomize</param>
+    /// <returns></returns>
     private int[] RandomBoidSubset(int arrLen, int subsetSize)
     {
         HashSet<int> indices = new HashSet<int>();
@@ -464,6 +474,7 @@ public class Simulation : MonoBehaviour
 
     /// <summary>
     /// Debugging function that draws the lines of the potential field
+    /// and the paths that are generated
     /// </summary>
     void OnDrawGizmos()
     {
@@ -508,6 +519,10 @@ public class Simulation : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Runs every frame and updates the positions of the boids 
+    /// and the forces applied to them
+    /// </summary>
     void Update()
     {
         if (boids != null)
