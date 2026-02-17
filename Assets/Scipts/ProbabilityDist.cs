@@ -147,7 +147,7 @@ public class ProbabilityDist : MonoBehaviour
         
         gridBuffer.GetData(probGridVec);
 
-        if (boidSettings.isMAPF) {
+        if (boidSettings.isMAPF || boidSettings.isPath) {
             var modifiedBuffer = new ComputeBuffer(totalCells, sizeof(float) * 3);
             modifiedBuffer.SetData(probGridVec);
 

@@ -33,7 +33,7 @@ MonoBehaviour:
   desiredDist: 25
   startDist: 10
   potentialField: 1
-  isMAPF: 1
+  isMAPF: 0
   isPath: 1
   isCBF: 0
   maxSteps: 500

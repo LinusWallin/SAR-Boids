@@ -92,7 +92,7 @@ void CSPotentialPathMain (uint3 id : SV_DispatchThreadID) {
         float3 F = probGrid[cellIndex];
         float mag = length(F);
         
-        if (mag < minGradient)
+        if (mag < minGradient && isMAPF)
         {
             float3 newForce = 0;
             for (uint i = 0; i < numObs; i++) {
