@@ -16,35 +16,36 @@ MonoBehaviour:
   startCols: 5
   startRows: 2
   startDepth: 1
-  sepRatio: 5
+  sepRatio: 1
   leaders: 8
   leaderInfluence: 1
   boidRadius: 1
-  startPosition: {x: -50, y: 0, z: 0}
-  minSpeed: 2
-  maxSpeed: 3
+  startPosition: {x: 7, y: 0, z: 7}
+  minSpeed: 0.2
+  maxSpeed: 0.3
   maxSteerForce: 1
   separationWeight: 4
   alignmentWeight: 10
   cohesionWeight: 75
   OSQP_DS: 25
   OSQP_C: 0.1
-  neighborMaxDist: 50
-  desiredDist: 25
-  startDist: 10
+  neighborMaxDist: 5
+  desiredDist: 2.5
+  startDist: 1
   potentialField: 1
-  isMAPF: 0
+  isMAPF: 1
   isPath: 1
   isCBF: 0
   maxSteps: 500
   minGradient: 10
-  cellRadius: 0.5
-  gridSize: {x: 250, y: 80, z: 250}
-  obstacleInfluence: 1000
+  cellRadius: 0.05
+  gridSize: {x: 200, y: 40, z: 200}
+  obstacleInfluence: 0.5
   D: 2.28
   kAtt: 1
-  kRep: 100
+  kRep: 0.5
   kForward: 20
   kPath: 100
-  minPathDist: 0.5
-  goalRadius: 5
+  minPathDist: 0.05
+  goalRadius: 0.5
+  obstacleRadius: 0.1

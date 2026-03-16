@@ -49,4 +49,5 @@ public class BoidSettings : ScriptableObject
     public float kPath;
     public float minPathDist;
     public float goalRadius;
+    public float obstacleRadius;
 }

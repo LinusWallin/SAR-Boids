@@ -64,6 +64,7 @@
         "boids",
         "Boids",
         "Flockmates",
+        "hlsl",
         "Lerp",
         "MAPF",
         "Mathf",

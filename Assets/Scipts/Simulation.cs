@@ -329,7 +329,7 @@ public class Simulation : MonoBehaviour
 
     /// <summary>
     /// Places ghost boids in a grid formation on the faces
-    /// of a obstacle.
+    /// of an obstacle.
     /// </summary>
     /// <param name="obstacle">The obstacle which the ghost boids should be placed on</param>
     /// <param name="boidIDMs">IDMs List to keep track of ghost boids</param>
@@ -509,9 +509,9 @@ public class Simulation : MonoBehaviour
                         if (!float.IsNaN(force.x) && force != Vector3.zero)
                         {
                             Gizmos.color = Color.blue;
-                            Gizmos.DrawLine(pos, pos + force.normalized * 0.2f);
+                            Gizmos.DrawLine(pos, pos + force.normalized * 0.4f * boidSettings.cellRadius);
                             Gizmos.color = Color.Lerp(Color.green, Color.red, force.magnitude / (100f * boidSettings.kAtt));
-                            Gizmos.DrawLine(pos + force.normalized * 0.2f, pos + force.normalized);
+                            Gizmos.DrawLine(pos + force.normalized * 0.4f * boidSettings.cellRadius, pos + force.normalized * 5 * boidSettings.cellRadius);
                         }
                     }
                 }

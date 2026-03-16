@@ -18,6 +18,7 @@ public class ProbabilityDist : MonoBehaviour
     Vector3 cellSize;
     Vector3 targetPos;
     Vector3[] probGridVec;
+    Vector3[] modifiedGridVec;
     Vector3[] startPos;
     Vector3[] pathData;
     float[] probGrid;
@@ -60,6 +61,7 @@ public class ProbabilityDist : MonoBehaviour
         kRep = boidSettings.kRep;
         numCells = (int)(gridSize.x * gridSize.y * gridSize.z);
         probGridVec = new Vector3[numCells];
+        modifiedGridVec = new Vector3[numCells];
         pathStepsData = new int[boidSettings.numBoids];
         pathData = new Vector3[boidSettings.numBoids * boidSettings.maxSteps];
         ProbabilityGrid();
@@ -82,14 +84,15 @@ public class ProbabilityDist : MonoBehaviour
                     pos.x = gridStart.x + i * cellSize.x;
                     pos.y = gridStart.y + j * cellSize.y;
                     pos.z = gridStart.z + k * cellSize.z;
-
-                    Collider[] obstacles = Physics.OverlapBox(
-                        pos,
-                        cellSize / 2,
-                        Quaternion.identity,
-                        obstacleMask
-                    );
-                    if (obstacles.Length > 0)
+                    bool isBoundary = i == 0 || i == gridSize.x - 1 ||
+                                    j == 0 || j == gridSize.y - 1 ||
+                                    k == 0 || k == gridSize.z - 1;
+                    if (isBoundary)
+                    {
+                        int index = i + (int)(j * gridSize.x) + (int)(k * gridSize.x * gridSize.y);
+                        obstacleList.Add(index);
+                    }
+                    else if(IsObstaclePosition(pos))
                     {
                         int index = i + (int)(j * gridSize.x) + (int)(k * gridSize.x * gridSize.y);
                         probGrid[index] = float.MaxValue;
@@ -155,12 +158,13 @@ public class ProbabilityDist : MonoBehaviour
             potentialCompute.SetBuffer(j, "obstaclePos", obstacleBuffer);
             potentialCompute.SetBuffer(j, "startPosBuffer", startBuffer);
             potentialCompute.SetBuffer(j, "pathStepsBuffer", pathStepsBuffer);
-            potentialCompute.SetBuffer(j, "probGrid", modifiedBuffer);
+            potentialCompute.SetBuffer(j, "probGrid", gridBuffer);
+            potentialCompute.SetBuffer(j, "modifiedProbGrid", modifiedBuffer);
             potentialCompute.SetBuffer(j, "pathBuffer", pathBuffer);
 
             int agentGroups = Mathf.CeilToInt(boidSettings.numBoids / (float)64);
             potentialCompute.Dispatch(j, agentGroups, 1, 1);
-            modifiedBuffer.GetData(probGridVec);
+            modifiedBuffer.GetData(modifiedGridVec);
 
             if (boidSettings.isPath) {
                 pathStepsBuffer.GetData(pathStepsData);
@@ -224,6 +228,44 @@ public class ProbabilityDist : MonoBehaviour
     /// <returns></returns>
     public int[] GetPathStepsData() {
         return pathStepsData;
+    }
+
+    /// <summary>
+    /// Checks if the position is inside an obstacle collider
+    /// </summary>
+    /// <param name="pos">The current inspected position</param>
+    /// <returns></returns>
+    private bool IsObstaclePosition(Vector3 pos)
+    {
+        //checks if on the edge of the obstacle
+        Collider[] obstacles = Physics.OverlapBox(
+            pos,
+            cellSize / 2,
+            Quaternion.identity,
+            obstacleMask
+        );
+        if (obstacles.Length > 0)
+        {
+            return true;
+        }
+
+        //checks if inside the obstacle
+        obstacles = Physics.OverlapBox(
+            new Vector3(pos.x, boidSettings.gridSize.y/2, pos.z), 
+            cellSize, 
+            Quaternion.identity, 
+            obstacleMask
+        );
+        foreach (var obs in obstacles)
+        {
+            Vector3 closest = obs.ClosestPoint(pos);
+            if (closest == pos)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
 }
