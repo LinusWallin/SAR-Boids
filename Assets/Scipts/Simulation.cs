@@ -33,6 +33,7 @@ public class Simulation : MonoBehaviour
 
     void Start()
     {
+        //boidSettings.gridSize = boidSettings.worldSize / boidSettings.cellRadius * 2;
         gridStart = GetGridStart();
         
         SpawnBoids();
@@ -323,9 +324,7 @@ public class Simulation : MonoBehaviour
             }
         }
         return boidCM;
-
     }
-
 
     /// <summary>
     /// Places ghost boids in a grid formation on the faces
@@ -487,31 +486,34 @@ public class Simulation : MonoBehaviour
             for (int i = 0; i < boidSettings.numBoids; i++) {
                 int s  = pathSteps[i];
                 for (int j = 1; j < s; j++) {
-                    Gizmos.color = Color.red;
+                    Gizmos.color = Color.blue;
                     Gizmos.DrawLine(paths[i][j-1], paths[i][j]);
                 }
             }
         
         }
 
-        for (int i = 0; i < boidSettings.gridSize.x; i++)
+        if (boidSettings.showPotField)
         {
-            for (int j = 0; j < boidSettings.gridSize.y; j++)
+            for (int i = 0; i < boidSettings.gridSize.x; i++)
             {
-                for (int k = 0; k < boidSettings.gridSize.z; k++)
+                for (int j = 0; j < boidSettings.gridSize.y; j++)
                 {
-                    if (i % 5 == 0 && j % 5 == 0 && k % 5 == 0)
+                    for (int k = 0; k < boidSettings.gridSize.z; k++)
                     {
-                        int index = i + j * (int)boidSettings.gridSize.x + k * (int)(boidSettings.gridSize.x * boidSettings.gridSize.y);
-                        Vector3 pos = gridStart + new Vector3(i, j, k) * boidSettings.cellRadius * 2;
-                        Vector3 force = potentialField[index];
-
-                        if (!float.IsNaN(force.x) && force != Vector3.zero)
+                        if (i % 3 == 0 && j % 3 == 0 && k % 3 == 0)
                         {
-                            Gizmos.color = Color.blue;
-                            Gizmos.DrawLine(pos, pos + force.normalized * 0.4f * boidSettings.cellRadius);
-                            Gizmos.color = Color.Lerp(Color.green, Color.red, force.magnitude / (100f * boidSettings.kAtt));
-                            Gizmos.DrawLine(pos + force.normalized * 0.4f * boidSettings.cellRadius, pos + force.normalized * 5 * boidSettings.cellRadius);
+                            int index = i + j * (int)boidSettings.gridSize.x + k * (int)(boidSettings.gridSize.x * boidSettings.gridSize.y);
+                            Vector3 pos = gridStart + new Vector3(i, j, k) * boidSettings.cellRadius * 2;
+                            Vector3 force = potentialField[index];
+
+                            if (!float.IsNaN(force.x) && force != Vector3.zero)
+                            {
+                                Gizmos.color = Color.blue;
+                                Gizmos.DrawLine(pos, pos + force.normalized * 0.4f * boidSettings.cellRadius);
+                                Gizmos.color = Color.Lerp(Color.green, Color.red, force.magnitude / (100f * boidSettings.kAtt));
+                                Gizmos.DrawLine(pos + force.normalized * 0.4f * boidSettings.cellRadius, pos + force.normalized * 5 * boidSettings.cellRadius);
+                            }
                         }
                     }
                 }

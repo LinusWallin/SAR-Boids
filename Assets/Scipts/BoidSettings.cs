@@ -8,6 +8,7 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "BoidSettings", menuName = "Scriptable Objects/BoidSettings")]
 public class BoidSettings : ScriptableObject
 {
+    [Header("Boid Settings")]
     public int numBoids;
     public int startCols;
     public int startRows;
@@ -25,29 +26,54 @@ public class BoidSettings : ScriptableObject
     public float separationWeight;
     public float alignmentWeight;
     public float cohesionWeight;
-    public float OSQP_DS;
-    public float OSQP_C;
-
     public float neighborMaxDist;
     public float desiredDist;
     public float startDist;
 
-    public bool potentialField;
-    public bool isMAPF;
-    public bool isPath;
+    [Header("Control Barrier Function Settings")]
+    public float OSQP_DS;
+    public float OSQP_C;
     public bool isCBF;
-    public int maxSteps;
-    public float minGradient;
+
+    [Header("APF Settings")]
+    public bool potentialField;
     public float cellRadius;
+    public Vector3 worldSize;
     public Vector3 gridSize;
     public float obstacleInfluence;
-    public float D;
+    
     public float kAtt;
     public float kRep;
-    [Range(0, 100)]
     public int kForward;
-    public float kPath;
-    public float minPathDist;
+    
     public float goalRadius;
     public float obstacleRadius;
+    
+    [Header("Path Following Settings")]
+    public bool isPath;
+    public float pathStepSize;
+    public float kPath;
+    public float minPathDist;
+    public int maxSteps;
+    
+    [Header("MAPF Settings")]
+    public bool isMAPF;
+    public int histSize;
+    public int maxVirtualObs;
+    public float minGradient;
+    public float D;
+    public float revisitedDist;
+    public float kRepMax;
+    public float kRepMin;
+    public float kAttrMax;
+    public float kAttrMin;
+    public float repKChange;
+    public float repKNoChange;
+    public float attKChange;
+    public float attKNoChange;
+
+    [Header("Visualization Options")]
+    public bool showForcesOnBoid;
+    public bool showPotField;
+    public bool showGeneratedPath;
 }

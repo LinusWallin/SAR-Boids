@@ -27,6 +27,22 @@ public class ProbabilityDist : MonoBehaviour
     List<Vector3>[] path;
     LayerMask obstacleMask;
     ComputeShader potentialCompute;
+    
+    // ── compute buffers
+    ComputeBuffer obstacleBuffer;
+    ComputeBuffer startBuffer;
+    ComputeBuffer gridBuffer;
+    ComputeBuffer pathStepsBuffer;
+    ComputeBuffer pathBuffer;
+    ComputeBuffer modifiedBuffer;
+    ComputeBuffer posHistBuffer;
+    ComputeBuffer histCountBuffer;
+    ComputeBuffer virtualObsBuffer;
+    ComputeBuffer virtObsCountBuffer;
+    ComputeBuffer dynKRepBuffer;
+    ComputeBuffer dynKAttrBuffer;
+    ComputeBuffer inRecentLmBuffer;
+    ComputeBuffer agentMAPFBuffer;
 
     /// <summary>
     /// Initializes potential field
@@ -36,6 +52,7 @@ public class ProbabilityDist : MonoBehaviour
     /// <param name="gSize">Number of cells in each direction</param>
     /// <param name="cSize">Size of each cell</param>
     /// <param name="tPos">Target position</param>
+    /// <param name="sPos">Start position of each boid</param>
     /// <param name="comp">Compute shader</param>
     /// <param name="settings">Settings for the simulation</param>
     public void Init(
@@ -113,14 +130,13 @@ public class ProbabilityDist : MonoBehaviour
         int k = potentialCompute.FindKernel("CSProbabilityMain");
         int j = potentialCompute.FindKernel("CSPotentialPathMain");
         int totalCells = probGrid.Length;
-        var obstacleBuffer = new ComputeBuffer(obstaclePos.Length, sizeof(int));
+        obstacleBuffer = new ComputeBuffer(obstaclePos.Length, sizeof(int));
         obstacleBuffer.SetData(obstaclePos);
-        var startBuffer = new ComputeBuffer(boidSettings.numBoids, sizeof(float) * 3);
+        startBuffer = new ComputeBuffer(boidSettings.numBoids, sizeof(float) * 3);
         startBuffer.SetData(startPos);
-        var gridBuffer = new ComputeBuffer(totalCells, sizeof(float) * 3);
-        var pathStepsBuffer = new ComputeBuffer(boidSettings.numBoids, sizeof(int));
-        var pathBuffer = new ComputeBuffer(boidSettings.numBoids * boidSettings.maxSteps, sizeof(float) * 3);
-
+        gridBuffer = new ComputeBuffer(totalCells, sizeof(float) * 3);
+        pathStepsBuffer = new ComputeBuffer(boidSettings.numBoids, sizeof(int));
+        pathBuffer = new ComputeBuffer(boidSettings.numBoids * boidSettings.maxSteps, sizeof(float) * 3);
 
         //Global compute shader parameters
         potentialCompute.SetBool("isMAPF", boidSettings.isMAPF);
@@ -130,12 +146,23 @@ public class ProbabilityDist : MonoBehaviour
         potentialCompute.SetInt("numObs", obstaclePos.Length);
         potentialCompute.SetInt("numAgents", boidSettings.numBoids);
         potentialCompute.SetInt("maxSteps", boidSettings.maxSteps);
+        potentialCompute.SetInt("historySize", boidSettings.histSize);
+        potentialCompute.SetInt("maxVirtualObs", boidSettings.maxVirtualObs);
+        potentialCompute.SetFloat("revisitedDist", boidSettings.revisitedDist);
+        potentialCompute.SetFloat("kRepMax", boidSettings.kRepMax * kRep);
+        potentialCompute.SetFloat("kRepMin", boidSettings.kRepMin * kRep);
+        potentialCompute.SetFloat("kAttrMax", boidSettings.kAttrMax * kAtt);
+        potentialCompute.SetFloat("kAttrMin", boidSettings.kAttrMin * kAtt);
+        potentialCompute.SetFloat("repChange", boidSettings.repKChange);
+        potentialCompute.SetFloat("repNoChange", boidSettings.repKNoChange);
+        potentialCompute.SetFloat("attChange", boidSettings.attKChange);
+        potentialCompute.SetFloat("attNoChange", boidSettings.attKNoChange);
         potentialCompute.SetFloat("D", boidSettings.D);
         potentialCompute.SetFloat("dIO", boidSettings.obstacleInfluence);
         potentialCompute.SetFloat("kAttractive", kAtt);
         potentialCompute.SetFloat("kRepulsive", kRep);
         potentialCompute.SetFloat("minGradient", boidSettings.minGradient);
-        potentialCompute.SetFloat("cellStepSize", 2*boidSettings.cellRadius);
+        potentialCompute.SetFloat("dt", boidSettings.pathStepSize);
         potentialCompute.SetFloat("minGoalDistance", boidSettings.goalRadius);
         potentialCompute.SetVector("cellSize", cellSize);
         potentialCompute.SetVector("gridStart", gridStart);
@@ -151,7 +178,7 @@ public class ProbabilityDist : MonoBehaviour
         gridBuffer.GetData(probGridVec);
 
         if (boidSettings.isMAPF || boidSettings.isPath) {
-            var modifiedBuffer = new ComputeBuffer(totalCells, sizeof(float) * 3);
+            modifiedBuffer = new ComputeBuffer(totalCells, sizeof(float) * 3);
             modifiedBuffer.SetData(probGridVec);
 
             //Buffers for compute shader MAPF and path calculation
@@ -161,6 +188,34 @@ public class ProbabilityDist : MonoBehaviour
             potentialCompute.SetBuffer(j, "probGrid", gridBuffer);
             potentialCompute.SetBuffer(j, "modifiedProbGrid", modifiedBuffer);
             potentialCompute.SetBuffer(j, "pathBuffer", pathBuffer);
+
+            //Sets MAPF specific shader buffers
+            //if (boidSettings.isMAPF)
+            //{
+            posHistBuffer = new ComputeBuffer(
+                boidSettings.numBoids * boidSettings.histSize, sizeof(float) * 3
+            );
+            virtualObsBuffer = new ComputeBuffer(
+                boidSettings.numBoids * boidSettings.maxVirtualObs, sizeof(float) * 3
+            );
+
+            potentialCompute.SetBuffer(j, "posHistoryBuffer", posHistBuffer);
+            potentialCompute.SetBuffer(j, "virtualObsBuffer", virtualObsBuffer);
+
+            var agentMAPFData = new AgentMAPFData[boidSettings.numBoids];
+            for (int m = 0; m < boidSettings.numBoids; m++) {
+                agentMAPFData[m].dynKAttr = boidSettings.kAtt;
+                agentMAPFData[m].dynKRep = boidSettings.kRep;
+            }
+            agentMAPFBuffer = new ComputeBuffer(
+                boidSettings.numBoids,
+                AgentMAPFData.Size
+            );
+            agentMAPFBuffer.SetData(agentMAPFData);
+
+            potentialCompute.SetBuffer(j, "data", agentMAPFBuffer);
+
+            //}
 
             int agentGroups = Mathf.CeilToInt(boidSettings.numBoids / (float)64);
             potentialCompute.Dispatch(j, agentGroups, 1, 1);
@@ -173,14 +228,31 @@ public class ProbabilityDist : MonoBehaviour
             }
         }
 
-        obstacleBuffer.Release();
-        gridBuffer.Release();
-
-        startBuffer.Release();
-        pathStepsBuffer.Release();
-        pathBuffer.Release();
+        ReleaseBuffers();
 
         return probGridVec;
+    }
+
+    /// <summary>
+    /// Sets variables for the compute shader
+    /// </summary>
+    void SetShaderVariables() {
+        
+    }
+
+    /// <summary>
+    /// Releases all the buffers used for the potential field computation
+    /// </summary>
+    void ReleaseBuffers() {
+        obstacleBuffer?.Release();
+        startBuffer?.Release();
+        gridBuffer?.Release();
+        pathStepsBuffer?.Release();
+        pathBuffer?.Release();
+        modifiedBuffer?.Release();
+        posHistBuffer?.Release();
+        virtualObsBuffer?.Release();
+        agentMAPFBuffer?.Release();
     }
 
     /// <summary>
@@ -235,37 +307,29 @@ public class ProbabilityDist : MonoBehaviour
     /// </summary>
     /// <param name="pos">The current inspected position</param>
     /// <returns></returns>
-    private bool IsObstaclePosition(Vector3 pos)
-    {
-        //checks if on the edge of the obstacle
-        Collider[] obstacles = Physics.OverlapBox(
+    private bool IsObstaclePosition(Vector3 pos) {
+        return Physics.CheckBox(
             pos,
-            cellSize / 2,
+            cellSize * 0.5f,
             Quaternion.identity,
             obstacleMask
         );
-        if (obstacles.Length > 0)
-        {
-            return true;
-        }
+    }
 
-        //checks if inside the obstacle
-        obstacles = Physics.OverlapBox(
-            new Vector3(pos.x, boidSettings.gridSize.y/2, pos.z), 
-            cellSize, 
-            Quaternion.identity, 
-            obstacleMask
-        );
-        foreach (var obs in obstacles)
+    public struct AgentMAPFData {
+        public int histCount;
+        public int virtObsCount;
+        public int inRecentLm;
+        public float dynKRep;
+        public float dynKAttr;
+        
+        public static int Size
         {
-            Vector3 closest = obs.ClosestPoint(pos);
-            if (closest == pos)
+            get
             {
-                return true;
+                return sizeof(uint) * 3 + sizeof(float) * 2;
             }
         }
-
-        return false;
     }
 
 }

@@ -1,12 +1,24 @@
 #pragma kernel CSProbabilityMain
 #pragma kernel CSPotentialPathMain
 
+struct AgentMAPFData {
+    uint histCount;     // how many steps recorded per agent
+    uint virtObsCount;  // how many virtual obs per agent
+    uint inRecentLm;    // per-agent steps since last lm
+    float dynKRep;      // per-agent dynamic kRep
+    float dynKAttr;     // per-agent dynamic kAttr
+};
+
 StructuredBuffer<uint> obstaclePos;
 StructuredBuffer<float3> startPosBuffer;
 RWStructuredBuffer<uint> pathStepsBuffer;
 RWStructuredBuffer<float3> probGrid;
-RWStructuredBuffer<float3> modifiedProbGrid;
+RWStructuredBuffer<float3> modifiedProbGrid; //should consider if necessary
 RWStructuredBuffer<float3> pathBuffer;
+RWStructuredBuffer<float3> posHistoryBuffer;   // [agent * historySize + t]
+RWStructuredBuffer<float3> virtualObsBuffer;    // [agent * maxVirtualObs + k]
+
+RWStructuredBuffer<AgentMAPFData> data;
 
 bool isMAPF;
 uint xMax;
@@ -15,18 +27,114 @@ uint zMax;
 uint numObs;
 uint numAgents;
 uint maxSteps;
+uint historySize;
+uint maxVirtualObs;
+//float lmRange;       // range parameter for circling detection
+//float lmTurning;     // turning threshold (total angle accumulation)
+float revisitedDist; // precision for revisit detection
+float kRepMax;       // bounds for dynamic parameters
+float kRepMin;
+float kAttrMax;
+float kAttrMin;
+float repChange;
+float repNoChange;
+float attChange;
+float attNoChange;
 float D;
 float dIO; //distance of influence for obstacles
 float kAttractive;
 float kRepulsive;
 float minGradient;
-float cellStepSize;
+float dt;
 float minGoalDistance;
 float3 cellSize;
 float3 gridStart;
 float3 qGoal;
 
 #include "GridUtils.hlsl"
+#include "PotentialFieldUtils.hlsl"
+
+void UpdateDynParams (uint agentId, float dt, float3 currPos) {
+    float dynKRep = data[agentId].dynKRep;
+    float dynKAttr = data[agentId].dynKAttr;
+    uint inLm = data[agentId].inRecentLm;
+
+    if (inLm > 0) {
+        dynKRep = min(kRepMax, dynKRep  * (1 + dt * repChange));
+        dynKAttr = max(kAttrMin, dynKAttr * (1 - dt * attChange));
+    } else {
+        dynKRep = max(kRepMin, dynKRep * (1 - dt * repNoChange));
+        dynKAttr = min(kAttrMax, dynKAttr * (1 + dt * attNoChange));
+    }
+
+    float dGoal = distance(currPos, qGoal);
+    if (dGoal < dIO) {
+        dynKRep = dynKRep * pow(dGoal / dIO, 2);
+    }
+
+    data[agentId].dynKRep  = dynKRep;
+    data[agentId].dynKAttr = dynKAttr;
+}
+
+//force calculation with per-agent dynamic params and virtual obstacles
+float3 ComputeTotalForce(uint agentId, uint vBase, uint vCount, float3 currentPos) {
+    float kRep = data[agentId].dynKRep;
+    float kAttr = data[agentId].dynKAttr;
+
+    float dGoal = distance(currentPos, qGoal);
+
+    if (dGoal < 0.0001) return float3(0, 0, 0);
+
+    float3 attractiveForce = (-1 * kAttr) *
+        (dGoal + pow(1.0 / (D + dGoal), 3)) *
+        ((currentPos - qGoal) / dGoal);
+
+    // Repulsive force from real obstacles
+    float3 repulsiveForce = 0;
+    for (uint i = 0; i < numObs; i++) {
+        float3 qObs = IndexToCoordinate(obstaclePos[i], gridStart, cellSize, xMax, yMax);
+        float dQI = distance(currentPos, qObs);
+        if (dQI < dIO && dQI > 0.0001) {
+            repulsiveForce += kRep * (currentPos - qObs) / pow(dQI, 3)
+                            * ((1 / dQI) - (1 / dIO));
+        }
+    }
+
+    // Repulsive force from virtual obstacles
+    for (uint k = 0; k < vCount; k++) {
+        float3 qObs = virtualObsBuffer[vBase + k];
+        float dQI = distance(currentPos, qObs);
+        if (dQI < dIO && dQI > 0.0001) {
+            repulsiveForce += kRep * (currentPos - qObs) / pow(dQI, 3)
+                            * ((1 / dQI) - (1 / dIO));
+        }
+    }
+
+    // Tangential force (3D vector rejection, one per real obstacle)
+    /*float3 tangentialForce = 0;
+    float3 toGoal = normalize(qGoal - currentPos);
+    for (uint j = 0; j < numObs; j++) {
+        float3 qObs = IndexToCoordinate(obstaclePos[j], gridStart, cellSize, xMax, yMax);
+        float dQI = distance(currentPos, qObs);
+        if (dQI < dIO && dQI > 0.0001) {
+            float3 awayFromObs = normalize(currentPos - qObs);
+            float3 tangent = toGoal - dot(toGoal, awayFromObs) * awayFromObs;
+            float tMag = length(tangent);
+            if (tMag > 0.0001)
+                tangentialForce += normalize(tangent) * length(repulsiveForce) / numObs;
+        }
+    }
+    float tangentialForce = 0;
+    for (uint j = 0; j < numObs; j++){
+        float qObs = IndexToCoordinate(obstaclePos[j], gridStart, cellSize, xMax, yMax);
+        float dQI = distance(currentPos, qObs);
+        if (dQI < dIO && dQI > 0.0001) {
+
+        }
+    }*/
+
+    return attractiveForce + repulsiveForce + tangentialForce;
+}
 
 [numthreads(1024, 1, 1)]
 void CSProbabilityMain (uint3 id : SV_DispatchThreadID) {
@@ -75,7 +183,6 @@ void CSPotentialPathMain (uint3 id : SV_DispatchThreadID) {
 
     float3 currentCoordPos = startPosBuffer[agent];
     uint basePathIndex = agent * maxSteps;
-
     uint steps = 0;
 
     for (uint i = 0; i < maxSteps; i++)
@@ -89,36 +196,42 @@ void CSPotentialPathMain (uint3 id : SV_DispatchThreadID) {
         pathBuffer[basePathIndex + i] = currentCoordPos;
         steps++;
 
-        uint cellIndex = CoordToIndex(currentCoordPos, gridStart, cellSize, xMax, yMax);
-        float3 F = probGrid[cellIndex];
-        float mag = length(F);
-        
-        if (isMAPF)
-        {
-            F = modifiedProbGrid[cellIndex];
-            mag = length(F);
-            if (mag < minGradient) {
-              float3 newForce = 0;
-                for (uint j = 0; j < numObs; j++) {
-                    float3 qObs = IndexToCoordinate(obstaclePos[j], gridStart, cellSize, xMax, yMax);
-                    float dQI = distance(currentCoordPos, qObs);
-                    if (dQI < dIO && dQI > 0.0001) {
-                        newForce += (
-                            kRepulsive * ((currentCoordPos - qObs) / dQI)
-                            * (pow((1 / dQI), 2) - pow((1 / dIO), 2))
-                        );
-                    }
-                }
-                
-                modifiedProbGrid[cellIndex] = modifiedProbGrid[cellIndex] + newForce;
-                F = modifiedProbGrid[cellIndex];
-                mag = length(F);
-            }
-        }
-        
-        float3 dir = F / mag;
+        if (isMAPF) {
+            float3 lmPos;
+            bool inLm = IsLocalMin(agent, data[agent].histCount, revisitedDist, currentCoordPos, posHistoryBuffer, lmPos);
+            uint vBase  = agent * maxVirtualObs;
+            uint vCount = data[agent].virtObsCount;
 
-        currentCoordPos += dir * cellStepSize;
+            if (inLm) {
+                vCount %= maxVirtualObs;
+                virtualObsBuffer[vBase + vCount] = lmPos;
+                data[agent].virtObsCount = vCount + 1;
+                data[agent].inRecentLm = 10; // stay in "recent lm" for 10 steps
+            } else if (data[agent].inRecentLm > 0) {
+                data[agent].inRecentLm--;
+            }
+
+            UpdateDynParams(agent, dt, currentCoordPos);
+
+            // Record position history (rolling window)
+            uint count = data[agent].histCount;
+            uint base  = agent * historySize;
+            uint slot  = count % historySize;
+            posHistoryBuffer[base + slot] = currentCoordPos;
+
+            data[agent].histCount = min(count + 1, historySize);
+
+            float3 F = ComputeTotalForce(agent, vBase, vCount, currentCoordPos);
+            float mag = length(F);
+            if (mag < 0.0001) mag = 0.0001;
+            currentCoordPos += (F / mag) * dt;
+        } else {
+            uint cellIndex = CoordToIndex(currentCoordPos, gridStart, cellSize, xMax, yMax);
+            float3 F = probGrid[cellIndex];
+            float mag = length(F);
+            modifiedProbGrid[cellIndex] = F;
+            currentCoordPos += (F / mag) * dt;
+        }
 
         currentCoordPos = clamp(
             currentCoordPos,
