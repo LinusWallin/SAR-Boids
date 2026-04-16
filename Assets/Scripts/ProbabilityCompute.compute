@@ -133,7 +133,7 @@ float3 ComputeTotalForce(uint agentId, uint vBase, uint vCount, float3 currentPo
         }
     }*/
 
-    return attractiveForce + repulsiveForce + tangentialForce;
+    return attractiveForce + repulsiveForce;// + tangentialForce;
 }
 
 [numthreads(1024, 1, 1)]
