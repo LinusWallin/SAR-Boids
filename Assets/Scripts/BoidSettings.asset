@@ -16,35 +16,50 @@ MonoBehaviour:
   startCols: 5
   startRows: 2
   startDepth: 1
-  sepRatio: 5
+  sepRatio: 1
   leaders: 8
   leaderInfluence: 1
   boidRadius: 1
-  startPosition: {x: -50, y: 0, z: 0}
-  minSpeed: 2
-  maxSpeed: 3
+  startPosition: {x: 5, y: 0, z: 7}
+  minSpeed: 0.2
+  maxSpeed: 0.3
   maxSteerForce: 1
   separationWeight: 4
   alignmentWeight: 10
   cohesionWeight: 75
+  neighborMaxDist: 5
+  desiredDist: 2.5
+  startDist: 1
   OSQP_DS: 25
   OSQP_C: 0.1
-  neighborMaxDist: 50
-  desiredDist: 25
-  startDist: 10
-  potentialField: 1
-  isMAPF: 0
-  isPath: 1
   isCBF: 0
-  maxSteps: 500
-  minGradient: 10
-  cellRadius: 0.5
-  gridSize: {x: 250, y: 80, z: 250}
-  obstacleInfluence: 1000
-  D: 2.28
+  potentialField: 1
+  cellRadius: 0.2
+  worldSize: {x: 20, y: 4, z: 20}
+  gridSize: {x: 50, y: 10, z: 50}
+  obstacleInfluence: 1
   kAtt: 1
-  kRep: 100
+  kRep: 5
   kForward: 20
+  goalRadius: 0.5
+  obstacleRadius: 0.2
+  isPath: 1
+  pathStepSize: 0.1
   kPath: 100
-  minPathDist: 0.5
-  goalRadius: 5
+  minPathDist: 0.02
+  maxSteps: 750
+  isMAPF: 1
+  histSize: 10
+  maxVirtualObs: 20
+  minGradient: 0.01
+  D: 2.28
+  revisitedDist: 0.1
+  kRepMax: 1.5
+  kRepMin: 0.25
+  kAttrMax: 2
+  kAttrMin: 0.3
+  repKChange: 2
+  repKNoChange: 1
+  attKChange: 1
+  attKNoChange: 0.5
+  showPotField: 0

@@ -9,6 +9,18 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: d461e80e816f71f4992633ff2aa29d14, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: d461e80e816f71f4992633ff2aa29d14, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: d461e80e816f71f4992633ff2aa29d14, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: d461e80e816f71f4992633ff2aa29d14, type: 3}
       propertyPath: m_LocalPosition.x
       value: -0
       objectReference: {fileID: 0}
@@ -77,11 +89,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 11fc93c17e25a494da2d5dbc439cf3f1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isAlive: 0
+  isGoal: 0
+  isLeader: 0
   speed: 0
   numFlockmates: 0
+  pathIndex: 0
+  neighborPos: []
   direction: {x: 0, y: 0, z: 0}
-  acceleration: {x: 0, y: 0, z: 0}
   separationForce: {x: 0, y: 0, z: 0}
   alignmentForce: {x: 0, y: 0, z: 0}
   cohesionForce: {x: 0, y: 0, z: 0}
   flockCenter: {x: 0, y: 0, z: 0}
+  pathForce: {x: 0, y: 0, z: 0}
+  forwardForce: {x: 0, y: 0, z: 0}
+  target: {fileID: 0}
+  osqpTime: 0
