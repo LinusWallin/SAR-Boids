@@ -19,7 +19,7 @@ MonoBehaviour:
   sepRatio: 1
   leaders: 8
   leaderInfluence: 1
-  boidRadius: 1
+  boidRadius: 0.5
   startPosition: {x: 5, y: 0, z: 7}
   minSpeed: 0.2
   maxSpeed: 0.3
@@ -27,13 +27,13 @@ MonoBehaviour:
   separationWeight: 4
   alignmentWeight: 10
   cohesionWeight: 75
-  neighborMaxDist: 5
-  desiredDist: 2.5
+  neighborMaxDist: 2.5
+  desiredDist: 1
   startDist: 1
   OSQP_DS: 25
   OSQP_C: 0.1
-  isCBF: 0
-  potentialField: 1
+  isCBF: 1
+  potentialField: 0
   cellRadius: 0.2
   worldSize: {x: 20, y: 4, z: 20}
   gridSize: {x: 50, y: 10, z: 50}
@@ -62,4 +62,10 @@ MonoBehaviour:
   repKNoChange: 1
   attKChange: 1
   attKNoChange: 0.5
+  showForcesOnBoid: 0
   showPotField: 0
+  showGeneratedPath: 0
+  showGridObstacles: 0
+  showVisited: 1
+  saveInterval: 10
+  timeLimit: 5

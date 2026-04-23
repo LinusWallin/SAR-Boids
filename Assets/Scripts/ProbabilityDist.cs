@@ -316,6 +316,11 @@ public class ProbabilityDist : MonoBehaviour
         );
     }
 
+    public int[] GetObstaclePositions()
+    {
+        return obstaclePos;
+    }
+
     public struct AgentMAPFData {
         public int histCount;
         public int virtObsCount;

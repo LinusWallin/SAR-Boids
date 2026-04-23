@@ -10,20 +10,26 @@ using UnityEngine.UIElements;
 /// <author>Linus Wallin<author/>
 public class Simulation : MonoBehaviour
 {
+    bool finished;
     int maxNeighbors;
     int totalMaxNeighbors;
+    int framesSinceSavedPos = 0;
     const int threadGroupSize = 1024;
+    float startTime;
     public BoidSettings boidSettings;
     public GameObject boidPrefab;
     public GameObject[] obstacles;
     public Transform boundingBox;
     public ComputeShader compute;
     public ComputeShader potentialCompute;
+    public ComputeShader evaluationCompute;
     [SerializeField] private GameObject target;
     [SerializeField] private LayerMask obstacleMask;
     ProbabilityDist probDist;
     Vector3[] potentialField;
     List<Vector3>[] paths;
+    List<Vector3> visitedPositions;
+    List<Vector3> coveredPositions;
     Boid[] boids;
     Boid[] aliveBoids;
     Boid[] boidCMs;
@@ -33,6 +39,9 @@ public class Simulation : MonoBehaviour
 
     void Start()
     {
+        finished = false;
+        visitedPositions = new List<Vector3>();
+        coveredPositions = new List<Vector3>();
         //boidSettings.gridSize = boidSettings.worldSize / boidSettings.cellRadius * 2;
         gridStart = GetGridStart();
         
@@ -118,6 +127,7 @@ public class Simulation : MonoBehaviour
 
         boidsAtTarget = new Boid[boidSettings.numBoids];
 
+        startTime = Time.time;
     }
 
     /// <summary>
@@ -519,6 +529,33 @@ public class Simulation : MonoBehaviour
                 }
             }
         }
+
+        if (boidSettings.showGridObstacles)
+        {
+            int[] obs = probDist.GetObstaclePositions();
+            foreach(int index in obs)
+            {
+                Vector3 obsPos = Utils.indexToGridPos(
+                    (uint)index, 
+                    (int)boidSettings.gridSize.x, 
+                    (int)boidSettings.gridSize.y, 
+                    cellSize, 
+                    gridStart
+                );
+
+                Gizmos.DrawWireCube(obsPos, cellSize);
+            }
+        }
+
+        if (boidSettings.showVisited)
+        {
+            foreach (Vector3 pos in coveredPositions)
+            {
+                Gizmos.color = Color.red;
+                Gizmos.DrawWireCube(pos, cellSize);
+            }
+        }
+
     }
 
     /// <summary>
@@ -527,16 +564,47 @@ public class Simulation : MonoBehaviour
     /// </summary>
     void Update()
     {
+        if (finished) return;
         if (boids != null)
         {
-            if (AllReachedTarget())
+            if (AllReachedTarget() || Time.time - startTime > boidSettings.timeLimit)
             {
-                Debug.Log("TESTING");
+                Evaluation evaluation = gameObject.AddComponent<Evaluation>();
+                evaluation.Init(
+                    evaluationCompute,
+                    visitedPositions,
+                    gridStart,
+                    cellSize,
+                    boidSettings.neighborMaxDist,
+                    probDist.GetObstaclePositions(),
+                    (int)boidSettings.gridSize.x,
+                    (int)boidSettings.gridSize.y,
+                    (int)boidSettings.gridSize.z
+                );
+                float coverage = evaluation.GetCoverage();
+                Debug.Log("Coverage: " + coverage + "%");
+
+                if (boidSettings.showVisited)
+                {
+                    coveredPositions = evaluation.GetCoveredPositions();
+                }
+
+                finished = true;
             }
             else
             {
+                bool savePos = false;
                 double timeMs = 0.0;
                 var boidData = new BoidData[boids.Length];
+
+                if (framesSinceSavedPos == boidSettings.saveInterval)
+                {
+                    savePos = true;
+                    framesSinceSavedPos = 0;
+                } else
+                {
+                    framesSinceSavedPos += 1;
+                }
 
                 for (int i = 0; i < boids.Length; i++)
                 {
@@ -545,12 +613,16 @@ public class Simulation : MonoBehaviour
                         boidData[i].position = boids[i].position;
                         boidData[i].direction = boids[i].direction;
                         if (boidSettings.isPath && i < boidSettings.numBoids) {
-                            boidData[i].currentPathIndex = boids[i].pathIndex; //RESTS EACH FRAME?!?!?
+                            boidData[i].currentPathIndex = boids[i].pathIndex;
                             boidData[i].pathEndIndex = boidData[i].currentPathIndex + paths[i].Count;
                         }
                         if (boids[i].isAlive)
                         {
                             boidData[i].isAlive = 1;
+                            if (savePos)
+                            {
+                                visitedPositions.Add(boids[i].position);
+                            }
                         }
                         else
                         {
@@ -645,6 +717,7 @@ public class Simulation : MonoBehaviour
                                 boids[i].isGoal = true;
                                 boids[i].isAlive = false;
                                 boids[i].speed = 0;
+                                boidsAtTarget[i] = boids[i];
                             }
                             else
                             {
@@ -668,10 +741,6 @@ public class Simulation : MonoBehaviour
                                 boids[i].UpdateBoid();
                                 timeMs += boids[i].osqpTime;
                             }
-                        }
-                        else if (boidsAtTarget[i] == null)
-                        {
-                            boidsAtTarget[i] = boids[i];
                         }
                     }
                 }

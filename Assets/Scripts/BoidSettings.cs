@@ -76,4 +76,10 @@ public class BoidSettings : ScriptableObject
     public bool showForcesOnBoid;
     public bool showPotField;
     public bool showGeneratedPath;
+    public bool showGridObstacles;
+    public bool showVisited;
+
+    [Header("Evaluation")]
+    public int saveInterval;
+    public float timeLimit;
 }
