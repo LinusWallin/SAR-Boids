@@ -139,34 +139,7 @@ public class ProbabilityDist : MonoBehaviour
         pathBuffer = new ComputeBuffer(boidSettings.numBoids * boidSettings.maxSteps, sizeof(float) * 3);
 
         //Global compute shader parameters
-        potentialCompute.SetBool("isMAPF", boidSettings.isMAPF);
-        potentialCompute.SetInt("xMax", (int)gridSize.x);
-        potentialCompute.SetInt("yMax", (int)gridSize.y);
-        potentialCompute.SetInt("zMax", (int)gridSize.z);
-        potentialCompute.SetInt("numObs", obstaclePos.Length);
-        potentialCompute.SetInt("numAgents", boidSettings.numBoids);
-        potentialCompute.SetInt("maxSteps", boidSettings.maxSteps);
-        potentialCompute.SetInt("historySize", boidSettings.histSize);
-        potentialCompute.SetInt("maxVirtualObs", boidSettings.maxVirtualObs);
-        potentialCompute.SetFloat("revisitedDist", boidSettings.revisitedDist);
-        potentialCompute.SetFloat("kRepMax", boidSettings.kRepMax * kRep);
-        potentialCompute.SetFloat("kRepMin", boidSettings.kRepMin * kRep);
-        potentialCompute.SetFloat("kAttrMax", boidSettings.kAttrMax * kAtt);
-        potentialCompute.SetFloat("kAttrMin", boidSettings.kAttrMin * kAtt);
-        potentialCompute.SetFloat("repChange", boidSettings.repKChange);
-        potentialCompute.SetFloat("repNoChange", boidSettings.repKNoChange);
-        potentialCompute.SetFloat("attChange", boidSettings.attKChange);
-        potentialCompute.SetFloat("attNoChange", boidSettings.attKNoChange);
-        potentialCompute.SetFloat("D", boidSettings.D);
-        potentialCompute.SetFloat("dIO", boidSettings.obstacleInfluence);
-        potentialCompute.SetFloat("kAttractive", kAtt);
-        potentialCompute.SetFloat("kRepulsive", kRep);
-        potentialCompute.SetFloat("minGradient", boidSettings.minGradient);
-        potentialCompute.SetFloat("dt", boidSettings.pathStepSize);
-        potentialCompute.SetFloat("minGoalDistance", boidSettings.goalRadius);
-        potentialCompute.SetVector("cellSize", cellSize);
-        potentialCompute.SetVector("gridStart", gridStart);
-        potentialCompute.SetVector("qGoal", targetPos);
+        SetShaderVariables();
 
         //Buffers for compute shader APF calculation
         potentialCompute.SetBuffer(k, "obstaclePos", obstacleBuffer);
@@ -237,7 +210,34 @@ public class ProbabilityDist : MonoBehaviour
     /// Sets variables for the compute shader
     /// </summary>
     void SetShaderVariables() {
-        
+        potentialCompute.SetBool("isMAPF", boidSettings.isMAPF);
+        potentialCompute.SetInt("xMax", (int)gridSize.x);
+        potentialCompute.SetInt("yMax", (int)gridSize.y);
+        potentialCompute.SetInt("zMax", (int)gridSize.z);
+        potentialCompute.SetInt("numObs", obstaclePos.Length);
+        potentialCompute.SetInt("numAgents", boidSettings.numBoids);
+        potentialCompute.SetInt("maxSteps", boidSettings.maxSteps);
+        potentialCompute.SetInt("historySize", boidSettings.histSize);
+        potentialCompute.SetInt("maxVirtualObs", boidSettings.maxVirtualObs);
+        potentialCompute.SetFloat("revisitedDist", boidSettings.revisitedDist);
+        potentialCompute.SetFloat("kRepMax", boidSettings.kRepMax * kRep);
+        potentialCompute.SetFloat("kRepMin", boidSettings.kRepMin * kRep);
+        potentialCompute.SetFloat("kAttrMax", boidSettings.kAttrMax * kAtt);
+        potentialCompute.SetFloat("kAttrMin", boidSettings.kAttrMin * kAtt);
+        potentialCompute.SetFloat("repChange", boidSettings.repKChange);
+        potentialCompute.SetFloat("repNoChange", boidSettings.repKNoChange);
+        potentialCompute.SetFloat("attChange", boidSettings.attKChange);
+        potentialCompute.SetFloat("attNoChange", boidSettings.attKNoChange);
+        potentialCompute.SetFloat("D", boidSettings.D);
+        potentialCompute.SetFloat("dIO", boidSettings.obstacleInfluence);
+        potentialCompute.SetFloat("kAttractive", kAtt);
+        potentialCompute.SetFloat("kRepulsive", kRep);
+        potentialCompute.SetFloat("minGradient", boidSettings.minGradient);
+        potentialCompute.SetFloat("dt", boidSettings.pathStepSize);
+        potentialCompute.SetFloat("minGoalDistance", boidSettings.goalRadius);
+        potentialCompute.SetVector("cellSize", cellSize);
+        potentialCompute.SetVector("gridStart", gridStart);
+        potentialCompute.SetVector("qGoal", targetPos);
     }
 
     /// <summary>
