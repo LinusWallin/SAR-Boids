@@ -581,8 +581,8 @@ public class Simulation : MonoBehaviour
                     (int)boidSettings.gridSize.y,
                     (int)boidSettings.gridSize.z
                 );
-                float coverage = evaluation.GetCoverage();
-                Debug.Log("Coverage: " + coverage + "%");
+
+                PrintEvaluationResults(evaluation);
 
                 if (boidSettings.showVisited)
                 {
@@ -664,11 +664,20 @@ public class Simulation : MonoBehaviour
                     pathBuffer.SetData(pathArray);
                     compute.SetBuffer(0, "path", pathBuffer);
                 }
+                // Sets a empty buffer if not using pathfinding to avoid errors in the compute shader
+                else
+                {
+                    var pathBuffer = new ComputeBuffer(1, sizeof(float) * 3);
+                    pathBuffer.SetData(new Vector3[1]);
+                    compute.SetBuffer(0, "path", pathBuffer);
+                }
                 
                 compute.SetInt("numBoids", boids.Length);
+                compute.SetInt("numAliveBoids", boidSettings.numBoids);
                 compute.SetInt("maxNeighbors", maxNeighbors);
                 compute.SetFloat("neighborMaxDist", boidSettings.neighborMaxDist);
                 compute.SetFloat("desiredDist", boidSettings.desiredDist);
+                compute.SetFloat("collisionDist", boidSettings.boidRadius);
                 compute.SetFloat("goalRadius", boidSettings.goalRadius);
                 compute.SetFloat("kPath", boidSettings.kPath);
                 compute.SetFloat("minPathDist", boidSettings.minPathDist);
@@ -710,11 +719,13 @@ public class Simulation : MonoBehaviour
                 {
                     if (boids[i] != null)
                     {
+                        boids[i].isAlive = boidData[i].isAlive == 1;
                         if (boids[i].isAlive)
                         {
                             if (boidData[i].goalReached == 1)
                             {
                                 boids[i].isGoal = true;
+                                boids[i].timeToReachTarget = Time.time - startTime;
                                 boids[i].isAlive = false;
                                 boids[i].speed = 0;
                                 boidsAtTarget[i] = boids[i];
@@ -757,6 +768,38 @@ public class Simulation : MonoBehaviour
             }
             
         }
+    }
+
+    /// <summary>
+    /// Outputs evaluation metrics, including coverage, simulation time,
+    /// and average time to reach the target, to the debug log.
+    /// </summary>
+    /// <param name="evaluation">The evaluation object containing the results</param>
+    private void PrintEvaluationResults(Evaluation evaluation) {
+        float coverage = evaluation.GetCoverage();
+        Debug.Log("Coverage: " + coverage + "%");
+        Debug.Log("Simulation Time: " + (Time.time - startTime) + "s");
+        Debug.Log("Average Time to Reach Target: " + GetAverageTime() + "s");
+    }
+
+    /// <summary>
+    /// Gets the average time it took for the boids to reach the target, 
+    /// used for evaluation of the simulation
+    /// </summary>
+    /// <returns></returns>
+    private float GetAverageTime()
+    {
+        float totalTime = 0;
+        int count = 0;
+        for (int i = 0; i < boidSettings.numBoids; i++)
+        {
+            if (boids[i].isGoal)
+            {
+                totalTime += boids[i].timeToReachTarget;
+                count++;
+            }
+        }
+        return count > 0 ? totalTime / count : 0;
     }
 
     /// <summary>

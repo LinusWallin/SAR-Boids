@@ -32,8 +32,8 @@ MonoBehaviour:
   startDist: 1
   OSQP_DS: 25
   OSQP_C: 0.1
-  isCBF: 1
-  potentialField: 0
+  isCBF: 0
+  potentialField: 1
   cellRadius: 0.2
   worldSize: {x: 20, y: 4, z: 20}
   gridSize: {x: 50, y: 10, z: 50}
@@ -43,12 +43,12 @@ MonoBehaviour:
   kForward: 20
   goalRadius: 0.5
   obstacleRadius: 0.2
-  isPath: 1
+  isPath: 0
   pathStepSize: 0.1
   kPath: 100
   minPathDist: 0.02
   maxSteps: 750
-  isMAPF: 1
+  isMAPF: 0
   histSize: 10
   maxVirtualObs: 20
   minGradient: 0.01
@@ -68,4 +68,4 @@ MonoBehaviour:
   showGridObstacles: 0
   showVisited: 1
   saveInterval: 10
-  timeLimit: 5
+  timeLimit: 60

@@ -93,6 +93,7 @@ MonoBehaviour:
   isGoal: 0
   isLeader: 0
   speed: 0
+  timeToReachTarget: 0
   numFlockmates: 0
   pathIndex: 0
   neighborPos: []

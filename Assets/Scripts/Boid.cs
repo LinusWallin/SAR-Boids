@@ -14,6 +14,7 @@ public class Boid : MonoBehaviour
     public bool isGoal;
     public bool isLeader;
     public float speed;
+    public float timeToReachTarget;
     public int numFlockmates;
     public int pathIndex;
     public List<Vector3> neighborPos;

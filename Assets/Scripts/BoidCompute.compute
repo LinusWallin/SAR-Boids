@@ -27,10 +27,12 @@ RWStructuredBuffer<Neighbor> neighbors;
 RWStructuredBuffer<float3> potentialField;
 StructuredBuffer<float3> path;
 
-int numBoids;
-int maxNeighbors;
+uint numBoids;
+uint numAliveBoids;
+uint maxNeighbors;
 float neighborMaxDist;
 float desiredDist;
+float collisionDist;
 float goalRadius;
 float kPath;
 float minPathDist;
@@ -58,11 +60,19 @@ void CSMain (uint3 id : SV_DispatchThreadID) {
             for (uint indexBoid = 0; indexBoid < numBoids; indexBoid++) {
                 if (id.x != indexBoid) {
                     Boid boidI = boids[indexBoid];
+                    if (boidI.isAlive == 0 && indexBoid < numAliveBoids)
+                    {
+                        continue;
+                    }
                     if (boidI.goalReached == 0) {
-                        if (all(boidI.position != float3(0,0,0))) {
-                            float3 offset = boidI.position - currBoid.position;
-                            float sqrDist = offset.x * offset.x + offset.y * offset.y + offset.z * offset.z;
-
+                        float3 offset = boidI.position - currBoid.position;
+                        float sqrDist = offset.x * offset.x + offset.y * offset.y + offset.z * offset.z;
+                        
+                        //Checks for collision with other boids
+                        if (sqrDist < collisionDist * collisionDist) {
+                            currBoid.isAlive = 0;
+                            boidI.isAlive = 0;
+                        } else {
                             //Checks for neighboring boids within a set radius of the current boid
                             if (sqrDist < neighborMaxDist * neighborMaxDist) {
                                 Neighbor n;
