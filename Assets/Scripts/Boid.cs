@@ -74,7 +74,11 @@ public class Boid : MonoBehaviour
         newDir += cohesionForce;
         newDir += separationForce;
         newDir += alignmentForce;
+        Debug.DrawLine(position, position + cohesionForce, Color.blue);
+        Debug.DrawLine(position, position + separationForce, Color.yellow);
+        Debug.DrawLine(position, position + alignmentForce, Color.cyan);
         Debug.DrawLine(position, position + pathForce, Color.red);
+        Debug.DrawLine(position, position + forwardForce, Color.magenta);
         if (boidSettings.isPath) {
             newDir += pathForce;
             newDir += forwardForce;
@@ -85,17 +89,16 @@ public class Boid : MonoBehaviour
             boidSettings.maxSteerForce * Time.deltaTime, 
             0f
         );
-        direction = direction.normalized;
+        Debug.DrawLine(position, position + direction, Color.green);
         if (boidSettings.isCBF) {
             var sw = new System.Diagnostics.Stopwatch();
             sw.Start();
             Vector3 osqpDirection = OSQPSolver.RunOSQPSolver(this, boidSettings.OSQP_DS, boidSettings.OSQP_C);
             sw.Stop();
             osqpTime = sw.Elapsed.TotalMilliseconds;
-            if (osqpDirection.magnitude < 1000) {
-                direction = osqpDirection.normalized;
-            }
+            direction = osqpDirection;
         }
+        direction = direction.normalized;
         speed = Mathf.Clamp(speed, boidSettings.minSpeed, boidSettings.maxSpeed);
         transform.Translate(direction * speed * Time.deltaTime, Space.World);
         transform.forward = direction;

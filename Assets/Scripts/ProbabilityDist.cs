@@ -36,12 +36,7 @@ public class ProbabilityDist : MonoBehaviour
     ComputeBuffer pathBuffer;
     ComputeBuffer modifiedBuffer;
     ComputeBuffer posHistBuffer;
-    ComputeBuffer histCountBuffer;
     ComputeBuffer virtualObsBuffer;
-    ComputeBuffer virtObsCountBuffer;
-    ComputeBuffer dynKRepBuffer;
-    ComputeBuffer dynKAttrBuffer;
-    ComputeBuffer inRecentLmBuffer;
     ComputeBuffer agentMAPFBuffer;
 
     /// <summary>
@@ -234,7 +229,7 @@ public class ProbabilityDist : MonoBehaviour
         potentialCompute.SetFloat("kRepulsive", kRep);
         potentialCompute.SetFloat("minGradient", boidSettings.minGradient);
         potentialCompute.SetFloat("dt", boidSettings.pathStepSize);
-        potentialCompute.SetFloat("minGoalDistance", boidSettings.goalRadius);
+        potentialCompute.SetFloat("minGoalDistance", boidSettings.goalRadius / 2.0f);
         potentialCompute.SetVector("cellSize", cellSize);
         potentialCompute.SetVector("gridStart", gridStart);
         potentialCompute.SetVector("qGoal", targetPos);

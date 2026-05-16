@@ -3,16 +3,27 @@ using System.Collections.Generic;
 
 public class Evaluation : MonoBehaviour {
 
+    int _numBoids;
     int _xMax;
     int _yMax;
     int _zMax;
     int totalCells;
+
+    int collisions;
+    int reachedTarget;
+
     float sightRadius;
+    float averageTime;
+    float fastestTime;
+
     int[] obstaclePos;
     uint[] result;
+    Boid[] _boids;
+
     Vector3 gridStart;
     Vector3 cellSize;
     List<Vector3> visitedPositions;
+
     ComputeShader shader;
 
     /// <summary>
@@ -31,25 +42,31 @@ public class Evaluation : MonoBehaviour {
         ComputeShader eCompute,
         List<Vector3> positions, 
         Vector3 gStart, 
-        Vector3 cSize, 
+        Vector3 cSize,
+        Boid[] boids,
         float sightR, 
         int[] obsPos, 
         int xMax, 
         int yMax, 
-        int zMax
+        int zMax,
+        int numBoids
     ){
         shader = eCompute;
         visitedPositions = positions;
         gridStart = gStart;
         cellSize = cSize;
+        _boids = boids;
         sightRadius = sightR;
         obstaclePos = obsPos;
         _xMax = xMax;
         _yMax = yMax;
         _zMax = zMax;
+        _numBoids = numBoids;
         
         totalCells = _xMax * _yMax * _zMax;
         result = new uint[totalCells];
+
+        RunComputations();
     }
 
     /// <summary>
@@ -117,6 +134,65 @@ public class Evaluation : MonoBehaviour {
         }
 
         return coveredPostions;
+    }
+
+    private void RunComputations()
+    {
+        float totalTime = 0;
+        int count = 0;
+        for (int i = 0; i < _numBoids; i++)
+        {
+            if (_boids[i].isGoal)
+            {
+                totalTime += _boids[i].timeToReachTarget;
+                count++;
+                reachedTarget++;
+                if (_boids[i].timeToReachTarget < fastestTime)
+                {
+                    fastestTime = _boids[i].timeToReachTarget;
+                }
+            }
+            else if (!_boids[i].isAlive)
+            {
+                collisions++;
+            }
+
+        }
+        averageTime = count > 0 ? totalTime / count : 0;
+        fastestTime = fastestTime == float.MaxValue ? 0 : fastestTime;
+    }
+
+    /// <summary>
+    /// Gets the average time it took for the boids to reach the target, 
+    /// used for evaluation of the simulation
+    /// </summary>
+    /// <returns></returns>
+    public float GetAverageTime()
+    {
+        return averageTime;
+    }
+
+    /// <summary>
+    /// Gets the fastest recorded time.
+    /// </summary>
+    /// <returns></returns>
+    public float GetFastestTime()
+    {
+        return fastestTime;
+    }
+
+    /// <summary>
+    /// Counts boids that have collided with an obstacle or another boid
+    /// </summary>
+    /// <returns></returns>
+    public int GetCollisionCount()
+    {
+        return collisions;
+    }
+
+    public int GetReachedTargetCount()
+    {
+        return reachedTarget;
     }
 
 }

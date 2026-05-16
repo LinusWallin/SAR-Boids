@@ -29,6 +29,7 @@ public class BoidSettings : ScriptableObject
     public float neighborMaxDist;
     public float desiredDist;
     public float startDist;
+    public float goalRadius;
 
     [Header("Control Barrier Function Settings")]
     public float OSQP_DS;
@@ -44,15 +45,13 @@ public class BoidSettings : ScriptableObject
     
     public float kAtt;
     public float kRep;
-    public int kForward;
-    
-    public float goalRadius;
     public float obstacleRadius;
     
     [Header("Path Following Settings")]
     public bool isPath;
     public float pathStepSize;
     public float kPath;
+    public float kForward;
     public float minPathDist;
     public int maxSteps;
     

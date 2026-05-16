@@ -17,12 +17,12 @@ MonoBehaviour:
   startRows: 2
   startDepth: 1
   sepRatio: 1
-  leaders: 8
+  leaders: 0
   leaderInfluence: 1
-  boidRadius: 0.5
+  boidRadius: 0.25
   startPosition: {x: 5, y: 0, z: 7}
-  minSpeed: 0.2
-  maxSpeed: 0.3
+  minSpeed: 0.5
+  maxSpeed: 0.55
   maxSteerForce: 1
   separationWeight: 4
   alignmentWeight: 10
@@ -30,25 +30,25 @@ MonoBehaviour:
   neighborMaxDist: 2.5
   desiredDist: 1
   startDist: 1
-  OSQP_DS: 25
+  goalRadius: 1.5
+  OSQP_DS: 0.5
   OSQP_C: 0.1
-  isCBF: 0
-  potentialField: 1
+  isCBF: 1
+  potentialField: 0
   cellRadius: 0.2
   worldSize: {x: 20, y: 4, z: 20}
   gridSize: {x: 50, y: 10, z: 50}
   obstacleInfluence: 1
   kAtt: 1
   kRep: 5
-  kForward: 20
-  goalRadius: 0.5
   obstacleRadius: 0.2
-  isPath: 0
+  isPath: 1
   pathStepSize: 0.1
-  kPath: 100
+  kPath: 2
+  kForward: 0.2
   minPathDist: 0.02
-  maxSteps: 750
-  isMAPF: 0
+  maxSteps: 1000
+  isMAPF: 1
   histSize: 10
   maxVirtualObs: 20
   minGradient: 0.01
@@ -64,8 +64,8 @@ MonoBehaviour:
   attKNoChange: 0.5
   showForcesOnBoid: 0
   showPotField: 0
-  showGeneratedPath: 0
+  showGeneratedPath: 1
   showGridObstacles: 0
-  showVisited: 1
+  showVisited: 0
   saveInterval: 10
-  timeLimit: 60
+  timeLimit: 250
