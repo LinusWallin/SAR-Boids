@@ -12,15 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6a4a33dd2db013d46be6e20eba6db647, type: 3}
   m_Name: BoidSettings
   m_EditorClassIdentifier: 
-  numBoids: 10
-  startCols: 5
-  startRows: 2
-  startDepth: 1
+  numBoids: 20
   sepRatio: 1
   leaders: 0
   leaderInfluence: 1
   boidRadius: 0.25
-  startPosition: {x: 5, y: 0, z: 7}
   minSpeed: 0.5
   maxSpeed: 0.55
   maxSteerForce: 1
@@ -38,12 +34,12 @@ MonoBehaviour:
   cellRadius: 0.2
   worldSize: {x: 20, y: 4, z: 20}
   gridSize: {x: 50, y: 10, z: 50}
-  obstacleInfluence: 1
+  obstacleInfluence: 2.5
   kAtt: 1
-  kRep: 5
+  kRep: 1
   obstacleRadius: 0.2
   isPath: 1
-  pathStepSize: 0.1
+  pathStepSize: 0.25
   kPath: 2
   kForward: 0.2
   minPathDist: 0.02
@@ -53,14 +49,14 @@ MonoBehaviour:
   maxVirtualObs: 20
   minGradient: 0.01
   D: 2.28
-  revisitedDist: 0.1
-  kRepMax: 1.5
-  kRepMin: 0.25
-  kAttrMax: 2
-  kAttrMin: 0.3
-  repKChange: 2
-  repKNoChange: 1
-  attKChange: 1
+  revisitedDist: 0.025
+  kRepMax: 8
+  kRepMin: 1
+  kAttrMax: 1
+  kAttrMin: 0.2
+  repKChange: 4
+  repKNoChange: 4
+  attKChange: 0.5
   attKNoChange: 0.5
   showForcesOnBoid: 0
   showPotField: 0

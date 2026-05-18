@@ -10,14 +10,10 @@ public class BoidSettings : ScriptableObject
 {
     [Header("Boid Settings")]
     public int numBoids;
-    public int startCols;
-    public int startRows;
-    public int startDepth;
     public int sepRatio;
     public int leaders;
     public float leaderInfluence;
     public float boidRadius;
-    public Vector3 startPosition;
 
     public float minSpeed;
     public float maxSpeed;

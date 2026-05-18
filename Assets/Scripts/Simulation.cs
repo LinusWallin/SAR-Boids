@@ -16,7 +16,7 @@ public class Simulation : MonoBehaviour
     int framesSinceSavedPos = 0;
     int minDistCount = 0;
     int osqpComputations = 0;
-    const int threadGroupSize = 1024;
+    const int threadGroupSize = 64;
     float startTime;
     float averageMinDist = 0;
     double osqpTimeMs = 0;
