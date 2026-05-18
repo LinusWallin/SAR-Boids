@@ -27,6 +27,7 @@ public class Evaluation : MonoBehaviour {
     Vector3 gridStart;
     Vector3 cellSize;
     List<Vector3> visitedPositions;
+    List<float> timesToReachTarget;
 
     ComputeShader shader;
 
@@ -69,6 +70,9 @@ public class Evaluation : MonoBehaviour {
         
         totalCells = _xMax * _yMax * _zMax;
         result = new uint[totalCells];
+
+        timesToReachTarget = new List<float>();
+        fastestTime = float.MaxValue;
 
         RunComputations();
     }
@@ -148,6 +152,7 @@ public class Evaluation : MonoBehaviour {
         {
             if (_boids[i].isGoal)
             {
+                timesToReachTarget.Add(_boids[i].timeToReachTarget);
                 totalTime += _boids[i].timeToReachTarget;
                 count++;
                 reachedTarget++;
@@ -171,10 +176,16 @@ public class Evaluation : MonoBehaviour {
     /// and average time to reach the target, to the debug log.
     /// </summary>
     /// <param name="evaluation">The evaluation object containing the results</param>
-    public void PrintEvaluationResults(bool isCBF, double simTime, double osqpTimeMs, List<float> minDistances, int osqpComputations)
+    public void PrintEvaluationResults(
+        bool isCBF, 
+        double simTime, 
+        double osqpTimeMs, 
+        List<float> minDistances, 
+        int osqpComputations)
     {
         float coverage = GetCoverage();
         string avgMinDistance = minDistances.Average().ToString();
+        double osqpAverageTime = osqpComputations > 0 ? osqpTimeMs / osqpComputations : 0;
         Debug.Log("Coverage: " + coverage + "%");
         Debug.Log("Simulation Time: " + (simTime) + "s");
         Debug.Log("Average Time to Reach Target: " + averageTime + "s");
@@ -184,13 +195,19 @@ public class Evaluation : MonoBehaviour {
         Debug.Log("Reached Target Count: " + reachedTarget);
         if (isCBF)
         {
-            Debug.Log($"OSQP took on average: {osqpTimeMs / osqpComputations}ms");
+            Debug.Log($"OSQP took on average: {osqpAverageTime}ms");
         }
 
-        WriteResultsToFile(coverage, simTime, osqpTimeMs, osqpComputations, avgMinDistance);
+        WriteResultsToFile(isCBF, coverage, simTime, osqpAverageTime, avgMinDistance, minDistances);
     }
 
-    private void WriteResultsToFile(float coverage, double simTime, double osqpTimeMs, int osqpComputations, string avgMinDistance)
+    private void WriteResultsToFile(
+        bool isCBF,
+        float coverage, 
+        double simTime, 
+        double osqpAverageTime, 
+        string avgMinDistance,
+        List<float> minDistances)
     {
         string sceneName = SceneManager.GetActiveScene().name;
         string folderPath = Path.Combine(Application.persistentDataPath, "EvaluationResults");
@@ -202,24 +219,52 @@ public class Evaluation : MonoBehaviour {
         string filePath;
         do
         {
-            filePath = Path.Combine(folderPath, $"{sceneName}_{fileNumber}.txt");
+            filePath = Path.Combine(folderPath, $"{sceneName}_{fileNumber}.csv");
             fileNumber++;
         } while (File.Exists(filePath));
 
 
-        string content = $"Coverage: {coverage}%\n" +
-                         $"Simulation Time: {simTime}s\n" +
-                         $"Average Time to Reach Target: {averageTime}s\n" +
-                         $"Fastest Time to Reach Target: {fastestTime}s\n" +
-                         $"Average Minimum Distance: {avgMinDistance}\n" +
-                         $"Collision Count: {collisions}\n" +
-                         $"Reached Target Count: {reachedTarget}\n";
-        if (osqpComputations > 0)
+        StringBuilder sb = new StringBuilder();
+
+        // ===== Summary Metrics =====
+        sb.AppendLine("Metric,Value");
+
+        sb.AppendLine($"Coverage,{coverage}");
+        sb.AppendLine($"Simulation Time,{simTime}");
+        sb.AppendLine($"Average Time to Reach Target,{averageTime}");
+        sb.AppendLine($"Fastest Time to Reach Target,{fastestTime}");
+        sb.AppendLine($"Average Minimum Distance,{avgMinDistance}");
+        sb.AppendLine($"Collision Count,{collisions}");
+        sb.AppendLine($"Reached Target Count,{reachedTarget}");
+
+        if (isCBF)
         {
-            content += $"OSQP took on average: {osqpTimeMs / osqpComputations}ms\n";
+            sb.AppendLine($"Average OSQP Time (ms),{osqpAverageTime}");
         }
-        
-        File.WriteAllText(filePath, content);
+
+        // Empty line between sections
+        sb.AppendLine();
+
+        // ===== Time to Reach Target Data =====
+        sb.AppendLine("Boid,TimeToReachTarget");
+
+        for (int i = 0; i < timesToReachTarget.Count; i++)
+        {
+            sb.AppendLine($"{i},{timesToReachTarget[i]}");
+        }
+
+        // Empty line between sections
+        sb.AppendLine();
+
+        // ===== Distance Data =====
+        sb.AppendLine("Frame,MinimumNeighborDistance");
+
+        for (int i = 0; i < minDistances.Count; i++)
+        {
+            sb.AppendLine($"{i},{minDistances[i]}");
+        }
+
+        File.WriteAllText(filePath, sb.ToString());
 
         Debug.Log("Saved evaluation results to: " + filePath);
     }
