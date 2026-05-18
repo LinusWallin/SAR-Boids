@@ -92,7 +92,7 @@ public class Boid : MonoBehaviour
             boidSettings.maxSteerForce * Time.deltaTime, 
             0f
         );
-        if (boidSettings.isCBF) {
+        if (boidSettings.isCBF && Vector3.Distance(position, target.transform.position) > boidSettings.goalRadiusBuffer + boidSettings.goalRadius) {
             var sw = new System.Diagnostics.Stopwatch();
             sw.Start();
             Vector3 osqpDirection = OSQPSolver.RunOSQPSolver(this, boidSettings.OSQP_DS, boidSettings.OSQP_C);

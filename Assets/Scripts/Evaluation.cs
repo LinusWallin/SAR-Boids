@@ -147,7 +147,7 @@ public class Evaluation : MonoBehaviour {
                 totalTime += _boids[i].timeToReachTarget;
                 count++;
                 reachedTarget++;
-                if (_boids[i].timeToReachTarget < fastestTime)
+                if (0 < _boids[i].timeToReachTarget && _boids[i].timeToReachTarget < fastestTime)
                 {
                     fastestTime = _boids[i].timeToReachTarget;
                 }
@@ -163,36 +163,27 @@ public class Evaluation : MonoBehaviour {
     }
 
     /// <summary>
-    /// Gets the average time it took for the boids to reach the target, 
-    /// used for evaluation of the simulation
+    /// Outputs evaluation metrics, including coverage, simulation time,
+    /// and average time to reach the target, to the debug log.
     /// </summary>
-    /// <returns></returns>
-    public float GetAverageTime()
+    /// <param name="evaluation">The evaluation object containing the results</param>
+    public void PrintEvaluationResults(bool isCBF, double simTime, double osqpTimeMs, float averageMinDist, int minDistCount, int osqpComputations)
     {
-        return averageTime;
-    }
-
-    /// <summary>
-    /// Gets the fastest recorded time.
-    /// </summary>
-    /// <returns></returns>
-    public float GetFastestTime()
-    {
-        return fastestTime;
-    }
-
-    /// <summary>
-    /// Counts boids that have collided with an obstacle or another boid
-    /// </summary>
-    /// <returns></returns>
-    public int GetCollisionCount()
-    {
-        return collisions;
-    }
-
-    public int GetReachedTargetCount()
-    {
-        return reachedTarget;
+        float coverage = GetCoverage();
+        string avgMinDistance = minDistCount > 0 
+            ? (averageMinDist / minDistCount).ToString() 
+            : "N/A";
+        Debug.Log("Coverage: " + coverage + "%");
+        Debug.Log("Simulation Time: " + (simTime) + "s");
+        Debug.Log("Average Time to Reach Target: " + averageTime + "s");
+        Debug.Log("Fastest Time to Reach Target: " + fastestTime + "s");
+        Debug.Log("Average Minimum Distance: " + avgMinDistance);
+        Debug.Log("Collision Count: " + collisions);
+        Debug.Log("Reached Target Count: " + reachedTarget);
+        if (isCBF)
+        {
+            Debug.Log($"OSQP took on average: {osqpTimeMs / osqpComputations}ms");
+        }
     }
 
 }

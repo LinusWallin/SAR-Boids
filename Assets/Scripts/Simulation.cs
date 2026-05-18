@@ -180,13 +180,13 @@ public class Simulation : MonoBehaviour
                 true
             );
             aliveBoids[i].timeToReachTarget = Mathf.Infinity;
+            aliveBoids[i].target = target;
         }
         int[] leaderIndices = RandomBoidSubset(aliveBoids.Length, boidSettings.leaders);
         foreach (int leaderIdx in leaderIndices)
         {
             Boid leaderBoid = aliveBoids[leaderIdx].GetComponent<Boid>();
             leaderBoid.isLeader = true;
-            leaderBoid.target = target;
         }
     }
 
@@ -583,7 +583,7 @@ public class Simulation : MonoBehaviour
                     boidSettings.numBoids
                 );
 
-                PrintEvaluationResults(evaluation);
+                evaluation.PrintEvaluationResults(boidSettings.isCBF, Time.time - startTime, osqpTimeMs, averageMinDist, minDistCount, osqpComputations);
 
                 if (boidSettings.showVisited)
                 {
@@ -778,26 +778,6 @@ public class Simulation : MonoBehaviour
                 pathBuffer.Release();
             }
             
-        }
-    }
-
-    /// <summary>
-    /// Outputs evaluation metrics, including coverage, simulation time,
-    /// and average time to reach the target, to the debug log.
-    /// </summary>
-    /// <param name="evaluation">The evaluation object containing the results</param>
-    private void PrintEvaluationResults(Evaluation evaluation) {
-        float coverage = evaluation.GetCoverage();
-        Debug.Log("Coverage: " + coverage + "%");
-        Debug.Log("Simulation Time: " + (Time.time - startTime) + "s");
-        Debug.Log("Average Time to Reach Target: " + evaluation.GetAverageTime() + "s");
-        Debug.Log("Fastest Time to Reach Target: " + evaluation.GetFastestTime() + "s");
-        Debug.Log("Average Minimum Distance: " + (minDistCount > 0 ? averageMinDist / minDistCount : "N/A"));
-        Debug.Log("Collision Count: " + evaluation.GetCollisionCount());
-        Debug.Log("Reached Target Count: " + evaluation.GetReachedTargetCount());
-        if (boidSettings.isCBF)
-        {
-            Debug.Log($"OSQP took on average: {osqpTimeMs/osqpComputations}ms");
         }
     }
 
