@@ -38,6 +38,7 @@ public class Simulation : MonoBehaviour
     List<Vector3>[] paths;
     List<Vector3> visitedPositions;
     List<Vector3> coveredPositions;
+    List<float> minDistance;
     Boid[] boids;
     Boid[] aliveBoids;
     Boid[] boidCMs;
@@ -50,6 +51,7 @@ public class Simulation : MonoBehaviour
         finished = false;
         visitedPositions = new List<Vector3>();
         coveredPositions = new List<Vector3>();
+        minDistance = new List<float>();
         //boidSettings.gridSize = boidSettings.worldSize / boidSettings.cellRadius * 2;
         gridStart = GetGridStart();
         
@@ -583,7 +585,7 @@ public class Simulation : MonoBehaviour
                     boidSettings.numBoids
                 );
 
-                evaluation.PrintEvaluationResults(boidSettings.isCBF, Time.time - startTime, osqpTimeMs, averageMinDist, minDistCount, osqpComputations);
+                evaluation.PrintEvaluationResults(boidSettings.isCBF, Time.time - startTime, osqpTimeMs, minDistance, osqpComputations);
 
                 if (boidSettings.showVisited)
                 {
@@ -759,6 +761,7 @@ public class Simulation : MonoBehaviour
                                 osqpTimeMs += boids[i].osqpTime;
                                 osqpComputations++;
                                 averageNeighborDist += boidData[i].minNeighborDist;
+                                minDistance.Add(boidData[i].minNeighborDist);
                                 neighborDistCount++;
                             }
                         }

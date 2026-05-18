@@ -1,5 +1,9 @@
+using System.IO;
+using System.Text;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using System.Collections.Generic;
+using System.Linq;
 
 public class Evaluation : MonoBehaviour {
 
@@ -167,12 +171,10 @@ public class Evaluation : MonoBehaviour {
     /// and average time to reach the target, to the debug log.
     /// </summary>
     /// <param name="evaluation">The evaluation object containing the results</param>
-    public void PrintEvaluationResults(bool isCBF, double simTime, double osqpTimeMs, float averageMinDist, int minDistCount, int osqpComputations)
+    public void PrintEvaluationResults(bool isCBF, double simTime, double osqpTimeMs, List<float> minDistances, int osqpComputations)
     {
         float coverage = GetCoverage();
-        string avgMinDistance = minDistCount > 0 
-            ? (averageMinDist / minDistCount).ToString() 
-            : "N/A";
+        string avgMinDistance = minDistances.Average().ToString();
         Debug.Log("Coverage: " + coverage + "%");
         Debug.Log("Simulation Time: " + (simTime) + "s");
         Debug.Log("Average Time to Reach Target: " + averageTime + "s");
@@ -184,6 +186,42 @@ public class Evaluation : MonoBehaviour {
         {
             Debug.Log($"OSQP took on average: {osqpTimeMs / osqpComputations}ms");
         }
+
+        WriteResultsToFile(coverage, simTime, osqpTimeMs, osqpComputations, avgMinDistance);
+    }
+
+    private void WriteResultsToFile(float coverage, double simTime, double osqpTimeMs, int osqpComputations, string avgMinDistance)
+    {
+        string sceneName = SceneManager.GetActiveScene().name;
+        string folderPath = Path.Combine(Application.persistentDataPath, "EvaluationResults");
+
+        // Create the folder if it doesn't exist
+        Directory.CreateDirectory(folderPath);
+
+        int fileNumber = 1;
+        string filePath;
+        do
+        {
+            filePath = Path.Combine(folderPath, $"{sceneName}_{fileNumber}.txt");
+            fileNumber++;
+        } while (File.Exists(filePath));
+
+
+        string content = $"Coverage: {coverage}%\n" +
+                         $"Simulation Time: {simTime}s\n" +
+                         $"Average Time to Reach Target: {averageTime}s\n" +
+                         $"Fastest Time to Reach Target: {fastestTime}s\n" +
+                         $"Average Minimum Distance: {avgMinDistance}\n" +
+                         $"Collision Count: {collisions}\n" +
+                         $"Reached Target Count: {reachedTarget}\n";
+        if (osqpComputations > 0)
+        {
+            content += $"OSQP took on average: {osqpTimeMs / osqpComputations}ms\n";
+        }
+        
+        File.WriteAllText(filePath, content);
+
+        Debug.Log("Saved evaluation results to: " + filePath);
     }
 
 }
