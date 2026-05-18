@@ -219,7 +219,7 @@ public class Evaluation : MonoBehaviour {
         string filePath;
         do
         {
-            filePath = Path.Combine(folderPath, $"{sceneName}_{fileNumber}.csv");
+            filePath = Path.Combine(folderPath, $"{sceneName}_NumBoids{_numBoids}_{fileNumber}.csv");
             fileNumber++;
         } while (File.Exists(filePath));
 

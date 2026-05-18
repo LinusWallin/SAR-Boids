@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6a4a33dd2db013d46be6e20eba6db647, type: 3}
   m_Name: BoidSettings
   m_EditorClassIdentifier: 
-  numBoids: 20
+  numBoids: 10
   sepRatio: 1
   leaders: 0
   leaderInfluence: 1
@@ -27,6 +27,7 @@ MonoBehaviour:
   desiredDist: 1
   startDist: 1
   goalRadius: 1.5
+  goalRadiusBuffer: 0.75
   OSQP_DS: 0.5
   OSQP_C: 0.1
   isCBF: 1
@@ -58,7 +59,7 @@ MonoBehaviour:
   repKNoChange: 4
   attKChange: 0.5
   attKNoChange: 0.5
-  showForcesOnBoid: 0
+  showForcesOnBoid: 1
   showPotField: 0
   showGeneratedPath: 1
   showGridObstacles: 0
