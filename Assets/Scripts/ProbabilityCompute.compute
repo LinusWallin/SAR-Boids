@@ -217,7 +217,6 @@ void CSPotentialPathMain (uint3 id : SV_DispatchThreadID) {
 
             // Record position history (rolling window)
             uint count = data[agent].histCount;
-            ///uint slot  = count % historySize;
             posHistoryBuffer[base + slot] = currentCoordPos;
 
             data[agent].histCount = min(count + 1, historySize);
