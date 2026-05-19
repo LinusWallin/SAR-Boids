@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6a4a33dd2db013d46be6e20eba6db647, type: 3}
   m_Name: BoidSettings
   m_EditorClassIdentifier: 
-  numBoids: 10
+  numBoids: 20
   sepRatio: 1
   leaders: 0
   leaderInfluence: 1
@@ -62,7 +62,7 @@ MonoBehaviour:
   showForcesOnBoid: 1
   showPotField: 0
   showGeneratedPath: 1
-  showGridObstacles: 1
+  showGridObstacles: 0
   showVisited: 0
   saveInterval: 10
   timeLimit: 250
