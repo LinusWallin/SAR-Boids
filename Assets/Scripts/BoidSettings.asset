@@ -19,7 +19,7 @@ MonoBehaviour:
   boidRadius: 0.25
   minSpeed: 0.5
   maxSpeed: 0.55
-  maxSteerForce: 1
+  maxSteerForce: 2.5
   separationWeight: 4
   alignmentWeight: 10
   cohesionWeight: 75

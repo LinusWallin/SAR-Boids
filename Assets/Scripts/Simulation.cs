@@ -116,7 +116,7 @@ public class Simulation : MonoBehaviour
         Boid[] arrayIDM = boidIDMs.ToArray();
         int numIDMs = arrayIDM.Length;
 
-        maxNeighbors = (boidSettings.numBoids - 1 + numGhosts + numIDMs / 2);
+        maxNeighbors = (boidSettings.numBoids - 1 + numGhosts + numIDMs);
         totalMaxNeighbors = maxNeighbors * boidSettings.numBoids;
         boids = new Boid[boidSettings.numBoids + numGhosts + numIDMs];
 
@@ -321,7 +321,7 @@ public class Simulation : MonoBehaviour
                         center.z
                     );
                 }
-                int ghostIdx = col + col * row;
+                int ghostIdx = col + boidCols * row;
                 GameObject ghostBoid = Instantiate(boidPrefab, transform);
                 ghostBoid.transform.position = boidCMPos;
                 boidCM[ghostIdx] = ghostBoid.GetComponent<Boid>();
