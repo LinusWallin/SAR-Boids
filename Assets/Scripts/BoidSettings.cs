@@ -76,6 +76,6 @@ public class BoidSettings : ScriptableObject
     public bool showVisited;
 
     [Header("Evaluation")]
-    public int saveInterval;
+    public int saveInterval; // Number of frames between saving boid positions for coverage evaluation
     public float timeLimit;
 }

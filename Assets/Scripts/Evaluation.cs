@@ -205,6 +205,15 @@ public class Evaluation : MonoBehaviour {
         WriteResultsToFile(isCBF, coverage, simTime, osqpAverageTime, avgMinDistance, minDistances);
     }
 
+    /// <summary>
+    /// Writes the evaluation results to a CSV file in a structured format, including summary metrics
+    /// </summary>
+    /// <param name="isCBF">Whether the CBF algorithm was used</param>
+    /// <param name="coverage">The coverage percentage</param>
+    /// <param name="simTime">The simulation time</param>
+    /// <param name="osqpAverageTime">The average time taken by OSQP</param>
+    /// <param name="avgMinDistance">The average minimum distance</param>
+    /// <param name="minDistances">The list of minimum distances</param>
     private void WriteResultsToFile(
         bool isCBF,
         float coverage, 
