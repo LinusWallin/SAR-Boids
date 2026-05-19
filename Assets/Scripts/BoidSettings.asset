@@ -62,7 +62,7 @@ MonoBehaviour:
   showForcesOnBoid: 1
   showPotField: 0
   showGeneratedPath: 1
-  showGridObstacles: 0
+  showGridObstacles: 1
   showVisited: 0
   saveInterval: 10
   timeLimit: 250
