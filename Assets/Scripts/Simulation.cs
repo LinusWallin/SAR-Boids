@@ -572,6 +572,7 @@ public class Simulation : MonoBehaviour
             {
                 Evaluation evaluation = gameObject.AddComponent<Evaluation>();
                 evaluation.Init(
+                    boidSettings,
                     evaluationCompute,
                     visitedPositions,
                     gridStart,

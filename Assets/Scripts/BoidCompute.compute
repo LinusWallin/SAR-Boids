@@ -104,20 +104,35 @@ void CSMain (uint3 id : SV_DispatchThreadID) {
                             }
 
                             if (isPath) {
-                                if (currBoid.currentPathIndex != currBoid.pathEndIndex - 1) {
-                                    float distToNext = distance(path[currBoid.currentPathIndex + 1], currBoid.position);
-                                    float distToCurr = distance(path[currBoid.currentPathIndex], currBoid.position);
-                                    bool cond = (distToNext < distToCurr) || (distToCurr < minPathDist);
-                                    if (cond) {
-                                        currBoid.currentPathIndex += 1;
+                                int endIndex = currBoid.pathEndIndex - 1;
+
+                                if (currBoid.currentPathIndex < endIndex)
+                                {
+                                    int lookAhead = 10;
+                                    int searchEnd = min(currBoid.currentPathIndex + lookAhead, endIndex);
+
+                                    int bestIndex = currBoid.currentPathIndex;
+                                    float bestDist = distance(path[bestIndex], currBoid.position);
+
+                                    for (int i = currBoid.currentPathIndex + 1; i <= searchEnd; i++)
+                                    {
+                                        float d = distance(path[i], currBoid.position);
+                                        if (d < bestDist)
+                                        {
+                                            bestDist = d;
+                                            bestIndex = i;
+                                        }
                                     }
+
+                                    currBoid.currentPathIndex = bestIndex;
                                 }
+                                
+                                int curr = currBoid.currentPathIndex;
+                                int next = min(curr + 1, currBoid.pathEndIndex - 1);
 
-                                uint bestIndex = currBoid.currentPathIndex;
-                                float3 distToPath = path[bestIndex] - currBoid.position;
-
+                                float3 distToPath = path[curr] - currBoid.position;
                                 currBoid.pathForce = distToPath * length(distToPath) * kPath;
-                                currBoid.forwardForce = normalize(path[bestIndex + 1] - path[bestIndex]) * kForward;
+                                currBoid.forwardForce = normalize(path[next] - path[curr]) * kForward;
                             }
                             
                         }

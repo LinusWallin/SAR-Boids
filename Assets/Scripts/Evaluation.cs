@@ -29,6 +29,8 @@ public class Evaluation : MonoBehaviour {
     List<Vector3> visitedPositions;
     List<float> timesToReachTarget;
 
+    BoidSettings boidSettings;
+
     ComputeShader shader;
 
     /// <summary>
@@ -44,6 +46,7 @@ public class Evaluation : MonoBehaviour {
     /// <param name="yMax">Maximum Y dimension</param>
     /// <param name="zMax">Maximum Z dimension</param>
     public void Init(
+        BoidSettings settings,
         ComputeShader eCompute,
         List<Vector3> positions, 
         Vector3 gStart, 
@@ -56,6 +59,7 @@ public class Evaluation : MonoBehaviour {
         int zMax,
         int numBoids
     ){
+        boidSettings = settings;
         shader = eCompute;
         visitedPositions = positions;
         gridStart = gStart;
@@ -215,11 +219,24 @@ public class Evaluation : MonoBehaviour {
         // Create the folder if it doesn't exist
         Directory.CreateDirectory(folderPath);
 
+        string algorithmLabel = string.Join("-", new List<string>
+        {
+            boidSettings.isCBF  ? "CBF"  : null,
+            boidSettings.potentialField  ? "APF"  : null,
+            boidSettings.isPath ? "Path" : null,
+            boidSettings.isMAPF ? "MAPF" : null,
+        }.Where(s => s != null));
+
+        if (string.IsNullOrEmpty(algorithmLabel))
+            algorithmLabel = "StandardBoids";
+
         int fileNumber = 1;
         string filePath;
         do
         {
-            filePath = Path.Combine(folderPath, $"{sceneName}_NumBoids{_numBoids}_{fileNumber}.csv");
+            filePath = Path.Combine(
+                folderPath, 
+                $"{sceneName}_NumBoids{_numBoids}_{algorithmLabel}_{fileNumber}.csv");
             fileNumber++;
         } while (File.Exists(filePath));
 
@@ -262,6 +279,23 @@ public class Evaluation : MonoBehaviour {
         for (int i = 0; i < minDistances.Count; i++)
         {
             sb.AppendLine($"{i},{minDistances[i]}");
+        }
+
+        // Empty line between sections
+        sb.AppendLine();
+
+        // ===== BoidSettings Parameters =====
+        var excludedFields = new HashSet<string> {
+            "showForcesOnBoid", "showPotField", "showGeneratedPath",
+            "showGridObstacles", "showVisited", "saveInterval", "timeLimit"
+        };
+
+        sb.AppendLine("Param,Value");
+
+        foreach (var field in boidSettings.GetType().GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+        {
+            if (!excludedFields.Contains(field.Name))
+                sb.AppendLine($"{field.Name},{field.GetValue(boidSettings)}");
         }
 
         File.WriteAllText(filePath, sb.ToString());

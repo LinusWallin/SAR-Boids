@@ -50,7 +50,7 @@ MonoBehaviour:
   maxVirtualObs: 20
   minGradient: 0.01
   D: 2.28
-  revisitedDist: 0.025
+  revisitedDist: 0.1
   kRepMax: 8
   kRepMin: 1
   kAttrMax: 1
