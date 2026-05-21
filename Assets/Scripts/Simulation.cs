@@ -184,11 +184,22 @@ public class Simulation : MonoBehaviour
             aliveBoids[i].timeToReachTarget = Mathf.Infinity;
             aliveBoids[i].target = target;
         }
-        int[] leaderIndices = RandomBoidSubset(aliveBoids.Length, boidSettings.leaders);
-        foreach (int leaderIdx in leaderIndices)
+
+        if (boidSettings.leaders > 0 && boidSettings.leaders < aliveBoids.Length)
         {
-            Boid leaderBoid = aliveBoids[leaderIdx].GetComponent<Boid>();
-            leaderBoid.isLeader = true;
+            int[] leaderIndices = RandomBoidSubset(aliveBoids.Length, boidSettings.leaders);
+            foreach (int leaderIdx in leaderIndices)
+            {
+                Boid leaderBoid = aliveBoids[leaderIdx].GetComponent<Boid>();
+                leaderBoid.isLeader = true;
+            }
+        }
+        else if (boidSettings.leaders == aliveBoids.Length)
+        {
+            foreach (Boid b in aliveBoids)
+            {
+                b.isLeader = true;
+            }
         }
     }
 
@@ -685,9 +696,9 @@ public class Simulation : MonoBehaviour
                 compute.SetFloat("goalRadius", boidSettings.goalRadius);
                 compute.SetFloat("kPath", boidSettings.kPath);
                 compute.SetFloat("minPathDist", boidSettings.minPathDist);
+                compute.SetFloat("predictionDist", boidSettings.pathStepSize);
                 compute.SetBool("isPath", boidSettings.isPath);
                 compute.SetBool("isField", boidSettings.potentialField);
-                compute.SetFloat("kForward", boidSettings.kForward);
                 compute.SetInts(
                     "gridSize",
                     (int)boidSettings.gridSize.x,

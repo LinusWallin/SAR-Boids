@@ -37,10 +37,10 @@ float collisionDist;
 float goalRadius;
 float kPath;
 float minPathDist;
+float predictionDist;
 
 bool isPath;
 bool isField;
-float kForward;
 int3 gridSize;
 float3 cellSize;
 float3 gridStart;
@@ -49,6 +49,7 @@ float3 boundaryMin;
 float3 boundaryMax;
 
 #include "GridUtils.hlsl"
+#include "PathUtils.hlsl"
 
 bool isWithinBoundary(float3 position)
 {
@@ -129,10 +130,27 @@ void CSMain (uint3 id : SV_DispatchThreadID) {
                                 
                                 int curr = currBoid.currentPathIndex;
                                 int next = min(curr + 1, currBoid.pathEndIndex - 1);
+                                
+                                float3 futurePos = currBoid.position + normalize(currBoid.direction) * predictionDist;
+                                float3 a = path[curr];
+                                float3 b = path[next];
 
-                                float3 distToPath = path[curr] - currBoid.position;
-                                currBoid.pathForce = distToPath * length(distToPath) * kPath;
-                                currBoid.forwardForce = normalize(path[next] - path[curr]) * kForward;
+                                float3 normalPoint = ClosestPointOnSegment(a, b, futurePos);
+
+                                float distFromPath = distance(futurePos, normalPoint);
+                                
+                                float3 pathDir = normalize(b - a);
+
+                                float3 target =
+                                normalPoint +
+                                pathDir * predictionDist;
+
+                                if (distFromPath > minPathDist)
+                                {
+                                    float3 desired = normalize(target - currBoid.position);
+
+                                    currBoid.pathForce = desired * kPath;
+                                }
                             }
                             
                         }

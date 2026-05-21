@@ -80,11 +80,9 @@ public class Boid : MonoBehaviour
             Debug.DrawLine(position, position + separationForce, Color.yellow);
             Debug.DrawLine(position, position + alignmentForce, Color.cyan);
             Debug.DrawLine(position, position + pathForce, Color.red);
-            Debug.DrawLine(position, position + forwardForce, Color.magenta);
         }
         if (boidSettings.isPath) {
             newDir += pathForce;
-            newDir += forwardForce;
         }
         direction = Vector3.RotateTowards(
             direction, 
@@ -92,7 +90,7 @@ public class Boid : MonoBehaviour
             boidSettings.maxSteerForce * Time.deltaTime, 
             0f
         );
-        if (boidSettings.isCBF && Vector3.Distance(position, target.transform.position) > boidSettings.goalRadiusBuffer + boidSettings.goalRadius) {
+        if (boidSettings.isCBF && Vector3.Distance(position, target.transform.position) > boidSettings.goalRadius) {
             var sw = new System.Diagnostics.Stopwatch();
             sw.Start();
             Vector3 osqpDirection = OSQPSolver.RunOSQPSolver(this, boidSettings.OSQP_DS, boidSettings.OSQP_C);
@@ -101,9 +99,15 @@ public class Boid : MonoBehaviour
             direction = osqpDirection;
         }
         direction = direction.normalized;
+        if (float.IsNaN(direction.x) || direction.sqrMagnitude < 0.001f)
+        {
+            direction = transform.forward;
+        }
         speed = Mathf.Clamp(speed, boidSettings.minSpeed, boidSettings.maxSpeed);
         transform.Translate(direction * speed * Time.deltaTime, Space.World);
-        transform.forward = direction;
+        if (direction != Vector3.zero) {
+            transform.forward = direction;
+        }
     }
 
     /// <summary>
@@ -127,7 +131,7 @@ public class Boid : MonoBehaviour
     /// </summary>
     private void AlignmentRule()
     {
-        if (isLeader && target != null && boidSettings.isCBF)
+        if (isLeader && target != null)
         {
             Vector3 compassDir = target.transform.position - position;
             alignmentForce += compassDir *

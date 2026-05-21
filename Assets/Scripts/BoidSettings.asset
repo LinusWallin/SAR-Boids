@@ -27,10 +27,9 @@ MonoBehaviour:
   desiredDist: 1
   startDist: 1
   goalRadius: 1.5
-  goalRadiusBuffer: 0.75
   OSQP_DS: 0.5
   OSQP_C: 0.1
-  isCBF: 1
+  isCBF: 0
   potentialField: 0
   cellRadius: 0.2
   worldSize: {x: 20, y: 4, z: 20}
@@ -38,14 +37,13 @@ MonoBehaviour:
   obstacleInfluence: 2.5
   kAtt: 1
   kRep: 1
-  obstacleRadius: 0.2
-  isPath: 1
+  obstacleRadius: 0.5
+  isPath: 0
   pathStepSize: 0.25
-  kPath: 2
-  kForward: 0.2
-  minPathDist: 0.02
+  kPath: 0.2
+  minPathDist: 0.5
   maxSteps: 1000
-  isMAPF: 1
+  isMAPF: 0
   histSize: 10
   maxVirtualObs: 20
   minGradient: 0.01
@@ -61,7 +59,7 @@ MonoBehaviour:
   attKNoChange: 0.5
   showForcesOnBoid: 1
   showPotField: 0
-  showGeneratedPath: 1
+  showGeneratedPath: 0
   showGridObstacles: 0
   showVisited: 0
   saveInterval: 10
