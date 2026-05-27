@@ -10,20 +10,40 @@ using UnityEngine.UIElements;
 /// <author>Linus Wallin<author/>
 public class Simulation : MonoBehaviour
 {
+    bool finished;
+    /// <summary>
+    /// True once the simulation has ended (all boids reached the target,
+    /// the time limit elapsed, or all boids are dead). Polled by SimulationRunner.
+    /// </summary>
+    public bool IsFinished => finished;
     int maxNeighbors;
     int totalMaxNeighbors;
-    const int threadGroupSize = 1024;
+    int framesSinceSavedPos = 0;
+    int minDistCount = 0;
+    int osqpComputations = 0;
+    const int threadGroupSize = 64;
+    float startTime;
+    float averageMinDist = 0;
+    double osqpTimeMs = 0;
     public BoidSettings boidSettings;
     public GameObject boidPrefab;
     public GameObject[] obstacles;
+    public Transform startPositions;
     public Transform boundingBox;
     public ComputeShader compute;
     public ComputeShader potentialCompute;
+    public ComputeShader evaluationCompute;
+
+    ComputeBuffer pathBuffer;
+
     [SerializeField] private GameObject target;
     [SerializeField] private LayerMask obstacleMask;
     ProbabilityDist probDist;
     Vector3[] potentialField;
     List<Vector3>[] paths;
+    List<Vector3> visitedPositions;
+    List<Vector3> coveredPositions;
+    List<float> minDistance;
     Boid[] boids;
     Boid[] aliveBoids;
     Boid[] boidCMs;
@@ -33,6 +53,10 @@ public class Simulation : MonoBehaviour
 
     void Start()
     {
+        finished = false;
+        visitedPositions = new List<Vector3>();
+        coveredPositions = new List<Vector3>();
+        minDistance = new List<float>();
         //boidSettings.gridSize = boidSettings.worldSize / boidSettings.cellRadius * 2;
         gridStart = GetGridStart();
         
@@ -97,7 +121,7 @@ public class Simulation : MonoBehaviour
         Boid[] arrayIDM = boidIDMs.ToArray();
         int numIDMs = arrayIDM.Length;
 
-        maxNeighbors = (boidSettings.numBoids - 1 + numGhosts + numIDMs / 2);
+        maxNeighbors = (boidSettings.numBoids - 1 + numGhosts + numIDMs);
         totalMaxNeighbors = maxNeighbors * boidSettings.numBoids;
         boids = new Boid[boidSettings.numBoids + numGhosts + numIDMs];
 
@@ -118,6 +142,7 @@ public class Simulation : MonoBehaviour
 
         boidsAtTarget = new Boid[boidSettings.numBoids];
 
+        startTime = Time.time;
     }
 
     /// <summary>
@@ -146,17 +171,7 @@ public class Simulation : MonoBehaviour
         for (int i = 0; i < boidSettings.numBoids; i++)
         {
             GameObject b = Instantiate(boidPrefab, transform);
-            b.transform.position = new Vector3(
-                boidSettings.startPosition.x +
-                boidSettings.startDist *
-                (i % boidSettings.startCols),
-                boidSettings.startPosition.y +
-                boidSettings.startDist *
-                Mathf.Floor(i / boidSettings.startCols),
-                boidSettings.startPosition.z +
-                boidSettings.startDist *
-                Mathf.Floor(i / (boidSettings.startCols * boidSettings.startRows))
-            );
+            b.transform.position = startPositions.GetChild(i).transform.position;
             aliveBoids[i] = b.GetComponent<Boid>();
             Vector3 direction = new Vector3(
                 Random.Range(-boidSettings.maxSpeed, boidSettings.maxSpeed),
@@ -171,13 +186,25 @@ public class Simulation : MonoBehaviour
                 i * boidSettings.maxSteps,
                 true
             );
+            aliveBoids[i].timeToReachTarget = Mathf.Infinity;
+            aliveBoids[i].target = target;
         }
-        int[] leaderIndices = RandomBoidSubset(aliveBoids.Length, boidSettings.leaders);
-        foreach (int leaderIdx in leaderIndices)
+
+        if (boidSettings.leaders > 0 && boidSettings.leaders < aliveBoids.Length)
         {
-            Boid leaderBoid = aliveBoids[leaderIdx].GetComponent<Boid>();
-            leaderBoid.isLeader = true;
-            leaderBoid.target = target;
+            int[] leaderIndices = RandomBoidSubset(aliveBoids.Length, boidSettings.leaders);
+            foreach (int leaderIdx in leaderIndices)
+            {
+                Boid leaderBoid = aliveBoids[leaderIdx].GetComponent<Boid>();
+                leaderBoid.isLeader = true;
+            }
+        }
+        else if (boidSettings.leaders == aliveBoids.Length)
+        {
+            foreach (Boid b in aliveBoids)
+            {
+                b.isLeader = true;
+            }
         }
     }
 
@@ -310,7 +337,7 @@ public class Simulation : MonoBehaviour
                         center.z
                     );
                 }
-                int ghostIdx = col + col * row;
+                int ghostIdx = col + boidCols * row;
                 GameObject ghostBoid = Instantiate(boidPrefab, transform);
                 ghostBoid.transform.position = boidCMPos;
                 boidCM[ghostIdx] = ghostBoid.GetComponent<Boid>();
@@ -480,7 +507,7 @@ public class Simulation : MonoBehaviour
         if (potentialField == null) return;
         if (potentialField.Length == 0) return;
 
-        if (boidSettings.isPath) {
+        if (boidSettings.isPath && boidSettings.showGeneratedPath) {
             List<Vector3>[] paths = probDist.GetPGDPath();
             int[] pathSteps = probDist.GetPathStepsData();
             for (int i = 0; i < boidSettings.numBoids; i++) {
@@ -519,6 +546,33 @@ public class Simulation : MonoBehaviour
                 }
             }
         }
+
+        if (boidSettings.showGridObstacles)
+        {
+            int[] obs = probDist.GetObstaclePositions();
+            foreach(int index in obs)
+            {
+                Vector3 obsPos = Utils.indexToGridPos(
+                    (uint)index, 
+                    (int)boidSettings.gridSize.x, 
+                    (int)boidSettings.gridSize.y, 
+                    cellSize, 
+                    gridStart
+                );
+
+                Gizmos.DrawWireCube(obsPos, cellSize);
+            }
+        }
+
+        if (boidSettings.showVisited)
+        {
+            foreach (Vector3 pos in coveredPositions)
+            {
+                Gizmos.color = Color.red;
+                Gizmos.DrawWireCube(pos, cellSize);
+            }
+        }
+
     }
 
     /// <summary>
@@ -527,16 +581,49 @@ public class Simulation : MonoBehaviour
     /// </summary>
     void Update()
     {
+        if (finished) return;
         if (boids != null)
         {
-            if (AllReachedTarget())
+            if (AllReachedTarget() || Time.time - startTime > boidSettings.timeLimit || AllDeadBoids())
             {
-                Debug.Log("TESTING");
+                Evaluation evaluation = gameObject.AddComponent<Evaluation>();
+                evaluation.Init(
+                    boidSettings,
+                    evaluationCompute,
+                    visitedPositions,
+                    gridStart,
+                    cellSize,
+                    boids,
+                    boidSettings.neighborMaxDist,
+                    probDist.GetObstaclePositions(),
+                    (int)boidSettings.gridSize.x,
+                    (int)boidSettings.gridSize.y,
+                    (int)boidSettings.gridSize.z,
+                    boidSettings.numBoids
+                );
+
+                evaluation.PrintEvaluationResults(boidSettings.isCBF, Time.time - startTime, osqpTimeMs, minDistance, osqpComputations);
+
+                if (boidSettings.showVisited)
+                {
+                    coveredPositions = evaluation.GetCoveredPositions();
+                }
+
+                finished = true;
             }
             else
             {
-                double timeMs = 0.0;
+                bool savePos = false;
                 var boidData = new BoidData[boids.Length];
+
+                if (framesSinceSavedPos == boidSettings.saveInterval)
+                {
+                    savePos = true;
+                    framesSinceSavedPos = 0;
+                } else
+                {
+                    framesSinceSavedPos += 1;
+                }
 
                 for (int i = 0; i < boids.Length; i++)
                 {
@@ -545,12 +632,17 @@ public class Simulation : MonoBehaviour
                         boidData[i].position = boids[i].position;
                         boidData[i].direction = boids[i].direction;
                         if (boidSettings.isPath && i < boidSettings.numBoids) {
-                            boidData[i].currentPathIndex = boids[i].pathIndex; //RESTS EACH FRAME?!?!?
+                            boidData[i].currentPathIndex = boids[i].pathIndex;
                             boidData[i].pathEndIndex = boidData[i].currentPathIndex + paths[i].Count;
                         }
                         if (boids[i].isAlive)
                         {
+                            boidData[i].minNeighborDist = Mathf.Infinity;
                             boidData[i].isAlive = 1;
+                            if (savePos)
+                            {
+                                visitedPositions.Add(boids[i].position);
+                            }
                         }
                         else
                         {
@@ -588,21 +680,30 @@ public class Simulation : MonoBehaviour
 
                 if (boidSettings.isPath) {
                     Vector3[] pathArray = probDist.GetPathArray();
-                    var pathBuffer = new ComputeBuffer(pathArray.Length, sizeof(float) * 3);
+                    pathBuffer = new ComputeBuffer(pathArray.Length, sizeof(float) * 3);
                     pathBuffer.SetData(pathArray);
+                    compute.SetBuffer(0, "path", pathBuffer);
+                }
+                // Sets a empty buffer if not using pathfinding to avoid errors in the compute shader
+                else
+                {
+                    pathBuffer = new ComputeBuffer(1, sizeof(float) * 3);
+                    pathBuffer.SetData(new Vector3[1]);
                     compute.SetBuffer(0, "path", pathBuffer);
                 }
                 
                 compute.SetInt("numBoids", boids.Length);
+                compute.SetInt("numAliveBoids", boidSettings.numBoids);
                 compute.SetInt("maxNeighbors", maxNeighbors);
                 compute.SetFloat("neighborMaxDist", boidSettings.neighborMaxDist);
                 compute.SetFloat("desiredDist", boidSettings.desiredDist);
+                compute.SetFloat("collisionDist", boidSettings.boidRadius * 2);
                 compute.SetFloat("goalRadius", boidSettings.goalRadius);
                 compute.SetFloat("kPath", boidSettings.kPath);
                 compute.SetFloat("minPathDist", boidSettings.minPathDist);
+                compute.SetFloat("predictionDist", boidSettings.pathStepSize);
                 compute.SetBool("isPath", boidSettings.isPath);
                 compute.SetBool("isField", boidSettings.potentialField);
-                compute.SetInt("kForward", boidSettings.kForward);
                 compute.SetInts(
                     "gridSize",
                     (int)boidSettings.gridSize.x,
@@ -627,6 +728,8 @@ public class Simulation : MonoBehaviour
                     target.transform.position.y,
                     target.transform.position.z
                 );
+                compute.SetVector("boundaryMin", Utils.Vec3Mult(boidSettings.worldSize, new Vector3(-0.5f, -0.5f, -0.5f)));
+                compute.SetVector("boundaryMax", Utils.Vec3Mult(boidSettings.worldSize, new Vector3(0.5f, 0.5f, 0.5f)));
 
                 int threadGroups = Mathf.CeilToInt(boidSettings.numBoids / (float)threadGroupSize);
                 compute.Dispatch(0, threadGroups, 1, 1);
@@ -634,17 +737,23 @@ public class Simulation : MonoBehaviour
                 boidBuffer.GetData(boidData);
                 neighborBuffer.GetData(neighborData);
 
+                float averageNeighborDist = 0;
+                int neighborDistCount = 0;
+
                 for (int i = 0; i < boidSettings.numBoids; i++)
                 {
                     if (boids[i] != null)
                     {
+                        boids[i].isAlive = boidData[i].isAlive == 1;
                         if (boids[i].isAlive)
                         {
                             if (boidData[i].goalReached == 1)
                             {
                                 boids[i].isGoal = true;
+                                boids[i].timeToReachTarget = Time.time - startTime;
                                 boids[i].isAlive = false;
                                 boids[i].speed = 0;
+                                boidsAtTarget[i] = boids[i];
                             }
                             else
                             {
@@ -666,25 +775,27 @@ public class Simulation : MonoBehaviour
                                 }
 
                                 boids[i].UpdateBoid();
-                                timeMs += boids[i].osqpTime;
+                                osqpTimeMs += boids[i].osqpTime;
+                                osqpComputations++;
+                                averageNeighborDist += boidData[i].minNeighborDist;
+                                minDistance.Add(boidData[i].minNeighborDist);
+                                neighborDistCount++;
                             }
-                        }
-                        else if (boidsAtTarget[i] == null)
-                        {
-                            boidsAtTarget[i] = boids[i];
                         }
                     }
                 }
 
-                if (boidSettings.isCBF)
+                if (neighborDistCount > 0)
                 {
-                    Debug.Log($"OSQP took: {timeMs}ms");
+                    minDistCount++;
+                    averageMinDist += averageNeighborDist / neighborDistCount;
                 }
 
                 //release the compute shader buffers
                 boidBuffer.Release();
                 neighborBuffer.Release();
                 fieldBuffer.Release();
+                pathBuffer.Release();
             }
             
         }
@@ -699,6 +810,23 @@ public class Simulation : MonoBehaviour
         for (int b = 0; b < boidSettings.numBoids; b++)
         {
             if (boidsAtTarget[b] == null)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// Determines whether all boids in the collection are null or not alive.
+    /// </summary>
+    /// <remarks>Iterates the boid collection and returns as soon as a live boid is found.</remarks>
+    /// <returns>true if no boid is alive; otherwise, false.</returns>
+    private bool AllDeadBoids()
+    {
+        for (int a = 0; a < boidSettings.numBoids; a++)
+        {
+            if (boids[a] != null && boids[a].isAlive)
             {
                 return false;
             }
@@ -734,6 +862,7 @@ public class Simulation : MonoBehaviour
         public Vector3 separationDirection;
         public Vector3 pathForce;
         public Vector3 forwardForce;
+        public float minNeighborDist;
         public int currentPathIndex;
         public int pathEndIndex;
         public int numFlockmates;
@@ -744,7 +873,7 @@ public class Simulation : MonoBehaviour
         {
             get
             {
-                return sizeof(float) * 3 * 7 + sizeof(int) * 5;
+                return sizeof(float) * 3 * 7 + sizeof(int) * 5 + sizeof(float);
             }
         }
     }

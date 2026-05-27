@@ -10,14 +10,10 @@ public class BoidSettings : ScriptableObject
 {
     [Header("Boid Settings")]
     public int numBoids;
-    public int startCols;
-    public int startRows;
-    public int startDepth;
     public int sepRatio;
     public int leaders;
     public float leaderInfluence;
     public float boidRadius;
-    public Vector3 startPosition;
 
     public float minSpeed;
     public float maxSpeed;
@@ -29,6 +25,7 @@ public class BoidSettings : ScriptableObject
     public float neighborMaxDist;
     public float desiredDist;
     public float startDist;
+    public float goalRadius;
 
     [Header("Control Barrier Function Settings")]
     public float OSQP_DS;
@@ -44,9 +41,6 @@ public class BoidSettings : ScriptableObject
     
     public float kAtt;
     public float kRep;
-    public int kForward;
-    
-    public float goalRadius;
     public float obstacleRadius;
     
     [Header("Path Following Settings")]
@@ -76,4 +70,10 @@ public class BoidSettings : ScriptableObject
     public bool showForcesOnBoid;
     public bool showPotField;
     public bool showGeneratedPath;
+    public bool showGridObstacles;
+    public bool showVisited;
+
+    [Header("Evaluation")]
+    public int saveInterval; // Number of frames between saving boid positions for coverage evaluation
+    public float timeLimit;
 }

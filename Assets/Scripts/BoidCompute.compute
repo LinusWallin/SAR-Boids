@@ -1,5 +1,5 @@
 #pragma kernel CSMain
-static const int threadGroupSize = 1024;
+static const int threadGroupSize = 64;
 
 struct Boid {
     float3 position;
@@ -10,6 +10,7 @@ struct Boid {
     float3 separationDirection;
     float3 pathForce;
     float3 forwardForce;
+    float minNeighborDist;
     int currentPathIndex;
     int pathEndIndex;
     int numFlockmates;
@@ -27,23 +28,33 @@ RWStructuredBuffer<Neighbor> neighbors;
 RWStructuredBuffer<float3> potentialField;
 StructuredBuffer<float3> path;
 
-int numBoids;
-int maxNeighbors;
+uint numBoids;
+uint numAliveBoids;
+uint maxNeighbors;
 float neighborMaxDist;
 float desiredDist;
+float collisionDist;
 float goalRadius;
 float kPath;
 float minPathDist;
+float predictionDist;
 
 bool isPath;
 bool isField;
-uint kForward;
 int3 gridSize;
 float3 cellSize;
 float3 gridStart;
 float3 targetPos;
+float3 boundaryMin;
+float3 boundaryMax;
 
 #include "GridUtils.hlsl"
+#include "PathUtils.hlsl"
+
+bool isWithinBoundary(float3 position)
+{
+    return all(position >= boundaryMin && position <= boundaryMax);
+}
 
 [numthreads(threadGroupSize, 1, 1)]
 void CSMain (uint3 id : SV_DispatchThreadID) {
@@ -53,16 +64,31 @@ void CSMain (uint3 id : SV_DispatchThreadID) {
         if (length(targetPos - currBoid.position) < goalRadius) {
             currBoid.goalReached = 1;
         }
+        else if (!isWithinBoundary(currBoid.position)) {
+            currBoid.isAlive = 0;
+        }
         else {
             int startIdx = id.x * maxNeighbors;
             for (uint indexBoid = 0; indexBoid < numBoids; indexBoid++) {
                 if (id.x != indexBoid) {
                     Boid boidI = boids[indexBoid];
+                    if (boidI.isAlive == 0 && indexBoid < numAliveBoids)
+                    {
+                        continue;
+                    }
                     if (boidI.goalReached == 0) {
-                        if (all(boidI.position != float3(0,0,0))) {
-                            float3 offset = boidI.position - currBoid.position;
-                            float sqrDist = offset.x * offset.x + offset.y * offset.y + offset.z * offset.z;
-
+                        float3 offset = boidI.position - currBoid.position;
+                        float sqrDist = offset.x * offset.x + offset.y * offset.y + offset.z * offset.z;
+                        
+                        if (sqrDist < currBoid.minNeighborDist * currBoid.minNeighborDist) {
+                            currBoid.minNeighborDist = sqrt(sqrDist);
+                        }
+                        
+                        //Checks for collision with other boids
+                        if (sqrDist < collisionDist * collisionDist) {
+                            currBoid.isAlive = 0;
+                            boidI.isAlive = 0;
+                        } else {
                             //Checks for neighboring boids within a set radius of the current boid
                             if (sqrDist < neighborMaxDist * neighborMaxDist) {
                                 Neighbor n;
@@ -79,20 +105,52 @@ void CSMain (uint3 id : SV_DispatchThreadID) {
                             }
 
                             if (isPath) {
-                                if (currBoid.currentPathIndex != currBoid.pathEndIndex - 1) {
-                                    float distToNext = distance(path[currBoid.currentPathIndex + 1], currBoid.position);
-                                    float distToCurr = distance(path[currBoid.currentPathIndex], currBoid.position);
-                                    bool cond = (distToNext < distToCurr) || (distToCurr < minPathDist);
-                                    if (cond) {
-                                        currBoid.currentPathIndex += 1;
+                                int endIndex = currBoid.pathEndIndex - 1;
+
+                                if (currBoid.currentPathIndex < endIndex)
+                                {
+                                    int lookAhead = 10;
+                                    int searchEnd = min(currBoid.currentPathIndex + lookAhead, endIndex);
+
+                                    int bestIndex = currBoid.currentPathIndex;
+                                    float bestDist = distance(path[bestIndex], currBoid.position);
+
+                                    for (int i = currBoid.currentPathIndex + 1; i <= searchEnd; i++)
+                                    {
+                                        float d = distance(path[i], currBoid.position);
+                                        if (d < bestDist)
+                                        {
+                                            bestDist = d;
+                                            bestIndex = i;
+                                        }
                                     }
+
+                                    currBoid.currentPathIndex = bestIndex;
                                 }
+                                
+                                int curr = currBoid.currentPathIndex;
+                                int next = min(curr + 1, currBoid.pathEndIndex - 1);
+                                
+                                float3 futurePos = currBoid.position + normalize(currBoid.direction) * predictionDist;
+                                float3 a = path[curr];
+                                float3 b = path[next];
 
-                                uint bestIndex = currBoid.currentPathIndex;
-                                float3 distToPath = path[bestIndex] - currBoid.position;
+                                float3 normalPoint = ClosestPointOnSegment(a, b, futurePos);
 
-                                currBoid.pathForce = distToPath * length(distToPath) * kPath;
-                                currBoid.forwardForce = normalize(path[bestIndex + 1] - path[bestIndex]) * kForward;
+                                float distFromPath = distance(futurePos, normalPoint);
+                                
+                                float3 pathDir = normalize(b - a);
+
+                                float3 target =
+                                normalPoint +
+                                pathDir * predictionDist;
+
+                                if (distFromPath > minPathDist)
+                                {
+                                    float3 desired = normalize(target - currBoid.position);
+
+                                    currBoid.pathForce = desired * kPath;
+                                }
                             }
                             
                         }

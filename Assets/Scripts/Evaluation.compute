@@ -1,0 +1,112 @@
+#pragma kernel CSCoverageMain
+
+uint numPositions;
+
+uint xMax;
+uint yMax;
+uint zMax;
+
+float sightRadius;
+float3 gridStart;
+float3 cellSize;
+
+StructuredBuffer<float3> visitedPositions;
+RWStructuredBuffer<uint> coverageGrid;
+
+/// <summary>
+/// Checks if there's a clear line of sight between two points.
+/// </summary>
+bool HasLOS(float3 fromPos, float3 toPos) {
+    float3 dir = toPos - fromPos;
+    float dist = length(dir);
+    if (dist < 0.0001) return true;
+    dir /= dist;
+
+    int3 cell = (int3)floor((fromPos - gridStart) / cellSize);
+    int3 targetCell = (int3)floor((toPos - gridStart) / cellSize);
+    int3 stepDir = (int3)sign(dir);
+
+    float3 tDelta = abs(cellSize / dir);
+    float3 tMax;
+    tMax.x = (stepDir.x > 0)
+        ? ((cell.x + 1) * cellSize.x + gridStart.x - fromPos.x) / dir.x
+        : (cell.x       * cellSize.x + gridStart.x - fromPos.x) / dir.x;
+    tMax.y = (stepDir.y > 0)
+        ? ((cell.y + 1) * cellSize.y + gridStart.y - fromPos.y) / dir.y
+        : (cell.y       * cellSize.y + gridStart.y - fromPos.y) / dir.y;
+    tMax.z = (stepDir.z > 0)
+        ? ((cell.z + 1) * cellSize.z + gridStart.z - fromPos.z) / dir.z
+        : (cell.z       * cellSize.z + gridStart.z - fromPos.z) / dir.z;
+
+    for (int s = 0; s < 256; s++) {
+        uint idx = cell.x + cell.y * xMax + cell.z * xMax * yMax;
+        if (all(cell == targetCell))
+        {
+            if (coverageGrid[idx] == 2)
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+        
+
+        if (any(cell < 0) || cell.x >= (int)xMax ||
+            cell.y >= (int)yMax || cell.z >= (int)zMax)
+            return false;
+        
+        if (coverageGrid[idx] == 2) return false;
+
+        if (tMax.x < tMax.y && tMax.x < tMax.z) {
+            cell.x += stepDir.x; tMax.x += tDelta.x;
+        } else if (tMax.y < tMax.z) {
+            cell.y += stepDir.y; tMax.y += tDelta.y;
+        } else {
+            cell.z += stepDir.z; tMax.z += tDelta.z;
+        }
+    }
+    return false;
+}
+
+/// <summary>
+/// For each visited position, mark all cells within 
+/// sight radius and line of sight as covered.
+/// </summary>
+[numthreads(1024, 1, 1)]
+void CSCoverageMain (uint3 id : SV_DispatchThreadID) {
+    uint posIndex = id.x;
+    if (posIndex >= numPositions) return;
+
+    float3 agentPos = visitedPositions[posIndex];
+    int3 agentCell = (int3)floor((agentPos - gridStart) / cellSize);
+    int radiusCells = (int)ceil(sightRadius / min(cellSize.x, 
+                                           min(cellSize.y, cellSize.z)));
+
+    for (int dx = -radiusCells; dx <= radiusCells; dx++)
+    {
+        for (int dy = -radiusCells; dy <= radiusCells; dy++)
+        {
+            for (int dz = -radiusCells; dz <= radiusCells; dz++)
+            {
+                int3 targetCell = agentCell + int3(dx, dy, dz);
+
+                if (any(targetCell < 0) || targetCell.x >= (int) xMax ||
+                    targetCell.y >= (int) yMax || targetCell.z >= (int) zMax)
+                    continue;
+
+                float3 targetPos = gridStart + (float3(targetCell) + 0.5) * cellSize;
+                if (distance(agentPos, targetPos) > sightRadius)
+                    continue;
+                if (!HasLOS(agentPos, targetPos))
+                    continue;
+
+                uint cellIdx = targetCell.x
+                                + targetCell.y * xMax
+                                + targetCell.z * xMax * yMax;
+                coverageGrid[cellIdx] = 1;
+            }
+        }
+    }
+}

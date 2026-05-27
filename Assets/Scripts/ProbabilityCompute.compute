@@ -184,6 +184,7 @@ void CSPotentialPathMain (uint3 id : SV_DispatchThreadID) {
     float3 currentCoordPos = startPosBuffer[agent];
     uint basePathIndex = agent * maxSteps;
     uint steps = 0;
+    uint slot = 0; // for position history buffer
 
     for (uint i = 0; i < maxSteps; i++)
     {
@@ -198,7 +199,8 @@ void CSPotentialPathMain (uint3 id : SV_DispatchThreadID) {
 
         if (isMAPF) {
             float3 lmPos;
-            bool inLm = IsLocalMin(agent, data[agent].histCount, revisitedDist, currentCoordPos, posHistoryBuffer, lmPos);
+            uint base  = agent * historySize;
+            bool inLm = IsLocalMin(agent, data[agent].histCount, base, revisitedDist, currentCoordPos, posHistoryBuffer, lmPos);
             uint vBase  = agent * maxVirtualObs;
             uint vCount = data[agent].virtObsCount;
 
@@ -215,11 +217,11 @@ void CSPotentialPathMain (uint3 id : SV_DispatchThreadID) {
 
             // Record position history (rolling window)
             uint count = data[agent].histCount;
-            uint base  = agent * historySize;
-            uint slot  = count % historySize;
             posHistoryBuffer[base + slot] = currentCoordPos;
 
             data[agent].histCount = min(count + 1, historySize);
+            slot += 1;
+            slot %= historySize;
 
             float3 F = ComputeTotalForce(agent, vBase, vCount, currentCoordPos);
             float mag = length(F);
