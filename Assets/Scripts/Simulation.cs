@@ -11,6 +11,11 @@ using UnityEngine.UIElements;
 public class Simulation : MonoBehaviour
 {
     bool finished;
+    /// <summary>
+    /// True once the simulation has ended (all boids reached the target,
+    /// the time limit elapsed, or all boids are dead). Polled by SimulationRunner.
+    /// </summary>
+    public bool IsFinished => finished;
     int maxNeighbors;
     int totalMaxNeighbors;
     int framesSinceSavedPos = 0;
