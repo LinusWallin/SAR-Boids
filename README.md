@@ -2,6 +2,8 @@
 
 This is the implementation used for the thesis *3DBoids in Safety-critical Urban Search and Rescue Scenario Represented by Artificial Potential Fields* re-implementing the SAR boids from the work done by Hengstebeck C. et al. (https://doi.org/10.1016/j.fraope.2024.100160). This thesis adds High-Level Planners (HLPs) in the form of Artificial Potential Fields (APFs).
 
+![til](./Thesis/Images/gif.gif)
+
 ## Build Requirements
 
 - Windows (Can be changed by modifying the osqp_wrapper.c file)
@@ -46,4 +48,4 @@ In addition, starting positions for the alive boids are needed, and these can be
 
 To run the simulation on one of the scenarios, simply press play in Unity after opening the scenario. To run all scenarios with the specified metrics in SimulationRunner.cs script, open the `Launcher Scene` and press play. This will run the different versions of the scenarios until all are complete.
 
-![Project Screenshot](Thesis/Images/scenarios.png)
+![Project Screenshot](./Thesis/Images/scenarios.png)
